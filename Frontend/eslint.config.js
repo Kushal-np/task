@@ -14,10 +14,18 @@ export default defineConfig([
       tseslint.configs.recommended,
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
+      vite.config.recommended
     ],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    {
+      "rules":{
+        "semi":[2,"never"]
+      }
+    }
   },
 ])
+
+
