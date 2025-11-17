@@ -35,15 +35,10 @@ const otpSchema = z
 
 //This will be the register/Signup schema , we will be reusing the already declared/defined Schemas from this and the other file in the same directory
 export const registerSchema = z.object({
-    body:z.object({
-        email:emailSchema, // email schema from line no.10
-        password:passwordSchema,// password schema from line no.17 
-        retardname : retardnameSchema , // retardname schema from the same file ./RetardSchema.ts 's line no.5
-        displayName:z
-        .string()
-        .max(50,"Display name must not exceed 50 characters")
-        .optional(),
-    }),
+    email: emailSchema,
+    password: passwordSchema,
+    retardname: retardnameSchema,
+    displayName: z.string().max(50).optional(),
 });
 
 
@@ -81,7 +76,7 @@ export const confirmResetSchema = z.object({
     }),
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>["body"];
+export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>["body"];
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>["body"];
 export type resetPasswordSchema = z.infer<typeof resetPasswordSchema>["body"];

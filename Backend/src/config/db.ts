@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 const connectDB  = async(): Promise<void> =>{
     try{
+        console.log("THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",process.env.MONGO_URI!)
         const connect = await mongoose.connect(process.env.MONGO_URI!);
         console.log("MONGO DB connected !!!");
     }
@@ -13,7 +14,7 @@ const connectDB  = async(): Promise<void> =>{
         else{
             console.log("Unknown error occured");
         }
-        console.error('Problems while connecting to mongodb');
+        console.log((error as any).message)
     }
 }
 

@@ -29,8 +29,9 @@ const formatRetardResponse = (retard: IRetard): IRetardResponse => ({
 
 export const registerUser = async (req: Request<{}, {}, RegisterInput>, res: Response): Promise<void> => {
     try {
+        console.log("WEEEEEEEEEEEE AREEEEEEEEEEEE HEREEEEEEEEEEEEE")
         const { retardname, email, password, displayName } = req.body;
-
+        console.log(retardname , email , password , displayName);
         const existingUser = await Retard.findOne({
             $or: [{ email }, { retardname }],
         });
@@ -90,6 +91,8 @@ export const registerUser = async (req: Request<{}, {}, RegisterInput>, res: Res
             res.status(500).json({
                 success: false,
                 error: "Failed to send the verfication email. Please try again",
+                message:(emailError as Error).message
+
             });
         }
 
