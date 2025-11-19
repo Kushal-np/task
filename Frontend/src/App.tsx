@@ -21,10 +21,12 @@ const App: React.FC = () => {
           <Routes>
               <Route path="/signup" element={<SignupPage/>} />
               <Route path="/login" element={<LoginPage/>} />
-            <Route path="/" element={<Homepage />} >
-              {/* <Route path="/login" element={<LoginPage/>} /> */}
-              <Route index path="feed" element={<FeedPage/>}/>
-            </Route>
+          <Route path="/" element={<Homepage />}>
+            {/* Default child: FeedPage */}
+            <Route index element={<FeedPage />} />
+            {/* Other nested routes (optional) */}
+            <Route path="feed" element={<FeedPage />} />
+          </Route>
               <Route path="*" element={<PageDoesntExist/>} />
               
           </Routes>
