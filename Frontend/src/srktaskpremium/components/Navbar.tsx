@@ -55,9 +55,16 @@ export const Navbar = () => {
           />
 
           {/* Logo */}
-          <div className="relative z-10 flex items-center shrink-0">
-            <div className="w-10 h-10 rounded-full bg-srk-gradient flex items-center justify-center shadow-[0_0_15px_rgba(182,137,56,0.3)]">
-               <span className="font-bold text-black text-xl">S</span>
+          <div className="relative z-10 flex items-center shrink-0 group">
+            <div className="relative">
+              {/* Outer glow rings */}
+              <div className="absolute inset-0 rounded-full bg-srk-gold/20 blur-xl animate-pulse" />
+              <div className="absolute inset-0 rounded-full bg-srk-gold/10 blur-2xl" />
+              
+              {/* Main logo */}
+              <div className="relative w-10 h-10 rounded-full bg-srk-gradient flex items-center justify-center shadow-[0_0_30px_rgba(182,137,56,0.5),0_0_60px_rgba(182,137,56,0.3)] transition-all group-hover:shadow-[0_0_40px_rgba(182,137,56,0.7),0_0_80px_rgba(182,137,56,0.4)]">
+                 <span className="font-bold text-black text-xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">S</span>
+              </div>
             </div>
             
             {/* Animated Text: Expands on Scroll */}
@@ -65,8 +72,8 @@ export const Navbar = () => {
               style={{ width: logoTextWidth, opacity: logoTextOpacity }}
               className="overflow-hidden whitespace-nowrap flex items-center"
             >
-               <span className="font-bold text-white text-xl tracking-wide ml-3">
-                 SRK<span className="text-srk-gold">Task</span>
+               <span className="font-bold text-white text-xl tracking-wide ml-3 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                 SRK<span className="text-srk-gold drop-shadow-[0_0_15px_rgba(182,137,56,0.6)]">Task</span>
                </span>
             </motion.div>
           </div>
@@ -77,22 +84,24 @@ export const Navbar = () => {
               <a 
                 key={item} 
                 href={`#${item.toLowerCase().replace(/\s/g, '-')}`}
-                className="text-sm font-semibold text-gray-400 hover:text-srk-gold transition-colors relative group tracking-wider uppercase"
+                className="text-sm font-semibold text-gray-400 hover:text-srk-gold transition-all duration-300 relative group tracking-wider uppercase hover:drop-shadow-[0_0_8px_rgba(182,137,56,0.6)]"
               >
                 {item}
-                <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-srk-bronze transition-all duration-300 group-hover:w-full group-hover:left-0" />
+                <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-srk-bronze shadow-[0_0_8px_rgba(182,137,56,0.8)] transition-all duration-300 group-hover:w-full group-hover:left-0" />
               </a>
             ))}
           </div>
 
           {/* Action */}
           <div className="relative z-10 flex items-center gap-4 shrink-0">
-            <button className="hidden md:block px-6 py-2.5 rounded-full bg-white/5 hover:bg-srk-gold/10 text-srk-gold border border-srk-gold/30 font-bold text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(182,137,56,0.1)]">
-              Start Earning
+            <button className="hidden md:block relative group px-6 py-2.5 rounded-full bg-white/5 hover:bg-srk-gold/10 text-srk-gold border border-srk-gold/30 font-bold text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(182,137,56,0.2)] hover:shadow-[0_0_30px_rgba(182,137,56,0.5),0_0_60px_rgba(182,137,56,0.3)]">
+              {/* Button glow effect */}
+              <span className="absolute inset-0 rounded-full bg-srk-gold/0 group-hover:bg-srk-gold/5 blur transition-all" />
+              <span className="relative">Start Earning</span>
             </button>
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden text-white p-1"
+              className="md:hidden text-white p-1 hover:text-srk-gold transition-colors hover:drop-shadow-[0_0_8px_rgba(182,137,56,0.8)]"
             >
               {mobileMenuOpen ? <X /> : <Menu />}
             </button>
@@ -114,13 +123,15 @@ export const Navbar = () => {
                 key={item}
                 href={`#${item.toLowerCase().replace(/\s/g, '-')}`}
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-bold text-white hover:text-srk-gold transition-colors border-b border-white/5 pb-4"
+                className="text-3xl font-bold text-white hover:text-srk-gold transition-all duration-300 border-b border-white/5 pb-4 hover:drop-shadow-[0_0_15px_rgba(182,137,56,0.6)] hover:border-srk-gold/20"
               >
                 {item}
               </a>
             ))}
-            <button className="w-full py-5 rounded-2xl bg-srk-gradient text-black font-bold text-lg mt-4 shadow-[0_10px_30px_rgba(182,137,56,0.3)]">
-                  Start Earning
+            <button className="relative group w-full py-5 rounded-2xl bg-srk-gradient text-black font-bold text-lg mt-4 shadow-[0_10px_40px_rgba(182,137,56,0.4)] hover:shadow-[0_15px_60px_rgba(182,137,56,0.6)] transition-all hover:scale-[1.02] active:scale-[0.98]">
+              {/* Button inner glow */}
+              <span className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/10 blur-sm transition-all" />
+              <span className="relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">Start Earning</span>
             </button>
           </motion.div>
         )}

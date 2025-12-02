@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 
 // --- Type Definitions for Data Structures ---
-
 interface User {
   id: string;
   name: string;
@@ -81,17 +81,26 @@ interface UserWithTasks extends User {
   taskData: TaskMonitoringEntry;
 }
 
-// --- Configuration & Data ---
-const COLORS = {
-  BG_DEEP_BLACK: '#121212',
-  CARD_DARK: 'rgba(30, 30, 30, 0.85)',
-  TEXT_WHITE: '#F3F4F6',
-  GOLD_ACCENT_LIGHT: '#FFD700', // Royal Gold
-  GOLD_ACCENT_DARK: '#B8860B', // Dark Goldenrod
-  GREEN_SUCCESS: '#10B981',
-  RED_ALERT: '#EF4444',
-  BLUE_INFO: '#3B82F6',
-  ORANGE_WARN: '#F59E0B',
+// --- Theme Configuration ---
+const THEME = {
+  colors: {
+    bgDeepBlack: '#0a0a0a',
+    bgCard: 'rgba(26, 20, 16, 0.4)',
+    goldAccent: '#b68938',
+    goldLight: '#e1ba73',
+    goldGradient: 'linear-gradient(135deg, #b68938 0%, #e1ba73 100%)',
+    textWhite: '#F3F4F6',
+    textGray: '#9CA3AF',
+    greenSuccess: '#10B981',
+    redAlert: '#EF4444',
+    blueInfo: '#3B82F6',
+    orangeWarn: '#F59E0B',
+  },
+  effects: {
+    glass: 'backdrop-blur-xl',
+    shadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    goldGlow: '0 0 20px rgba(182, 137, 56, 0.3)',
+  }
 };
 
 // --- Mock Data ---
@@ -102,6 +111,8 @@ const ALL_USERS_DATA: User[] = [
   { id: 'SR11Z0G', name: 'Sara Ramirez', role: 'Affiliate', package: 'SRK Basic', balance: 450.75, status: 'Pending Verification', joinDate: '2025-10-29' },
   { id: 'JK55T6A', name: 'John Kim', role: 'Client', package: 'SRK Gold', balance: 0.00, status: 'Active', joinDate: '2025-05-10' },
   { id: 'LT66B8C', name: 'Lisa Taylor', role: 'Affiliate', package: 'SRK Elite', balance: 10500.20, status: 'Active', joinDate: '2024-12-05' },
+  { id: 'MG99X1F', name: 'Michael Garcia', role: 'Affiliate', package: 'SRK Prime', balance: 3200.75, status: 'Active', joinDate: '2025-07-18' },
+  { id: 'RS77Y2H', name: 'Rachel Smith', role: 'Client', package: 'SRK Basic', balance: 0.00, status: 'Pending', joinDate: '2025-10-30' },
 ];
 
 const PRIVATE_TASK_PERFORMANCE_DATA: PrivateTaskPerformance[] = [
@@ -109,6 +120,7 @@ const PRIVATE_TASK_PERFORMANCE_DATA: PrivateTaskPerformance[] = [
   { userId: 'LT66B8C', totalClicks: 3560, facebookClicks: 1200, youtubeClicks: 900, instagramClicks: 800, twitterClicks: 400, tiktokClicks: 260, link: 'https://srk.link/lisa_elite' },
   { userId: 'DM18Y9P', totalClicks: 980, facebookClicks: 300, youtubeClicks: 250, instagramClicks: 150, twitterClicks: 180, tiktokClicks: 100, link: 'https://srk.link/david_gold' },
   { userId: 'SR11Z0G', totalClicks: 150, facebookClicks: 50, youtubeClicks: 30, instagramClicks: 20, twitterClicks: 40, tiktokClicks: 10, link: 'https://srk.link/sara_basic' },
+  { userId: 'MG99X1F', totalClicks: 1850, facebookClicks: 700, youtubeClicks: 450, instagramClicks: 350, twitterClicks: 200, tiktokClicks: 150, link: 'https://srk.link/michael_prime' },
 ];
 
 const TASK_MONITORING_DATA: TaskMonitoringEntry[] = [
@@ -132,21 +144,29 @@ const TASK_MONITORING_DATA: TaskMonitoringEntry[] = [
       tiktok: { follow: { total: 1, completed: 0, status: 'Pending', link: 'tiktok.com/@david-tok' }, video: { total: 0, completed: 0, status: 'N/A', link: '' }, post: { total: 0, completed: 0, status: 'N/A', link: '' } },
     },
   },
+  {
+    userId: 'LT66B8C',
+    platforms: {
+      facebook: { follow: { total: 1, completed: 1, status: 'Approved', link: 'facebook.com/lisa-page' }, video: { total: 10, completed: 8, status: 'Approved', link: 'youtube.com/c/lisa-channel' }, post: { total: 15, completed: 12, status: 'In Review', link: 'instagram.com/lisa-gram' } },
+      youtube: { follow: { total: 1, completed: 1, status: 'Approved', link: 'youtube.com/c/lisa-channel' }, video: { total: 25, completed: 22, status: 'Approved', link: 'youtube.com/c/lisa-channel' }, post: { total: 5, completed: 3, status: 'Pending', link: '' } },
+      instagram: { follow: { total: 1, completed: 1, status: 'Approved', link: 'instagram.com/lisa-gram' }, video: { total: 15, completed: 14, status: 'Approved', link: '' }, post: { total: 30, completed: 28, status: 'Approved', link: 'instagram.com/lisa-gram' } },
+      twitter: { follow: { total: 1, completed: 1, status: 'Approved', link: 'twitter.com/lisa-tweet' }, video: { total: 8, completed: 6, status: 'In Review', link: '' }, post: { total: 20, completed: 18, status: 'Approved', link: 'twitter.com/lisa-tweet' } },
+      tiktok: { follow: { total: 1, completed: 1, status: 'Approved', link: 'tiktok.com/@lisa-tok' }, video: { total: 20, completed: 18, status: 'Approved', link: 'tiktok.com/@lisa-tok' }, post: { total: 10, completed: 8, status: 'Pending', link: '' } },
+    },
+  },
 ];
 
-const mockQueueData: {
-  payoutQueue: QueueItem[];
-  paymentVerificationQueue: QueueItem[];
-  trends: TrendItem[];
-} = {
+const mockQueueData = {
   payoutQueue: [
     { id: 'P001', userId: 'LT66B8C', amount: 1500.00, date: '2025-10-28', status: 'Pending' },
     { id: 'P002', userId: 'AC32R7L', amount: 800.00, date: '2025-10-27', status: 'In Review' },
     { id: 'P003', userId: 'DM18Y9P', amount: 350.00, date: '2025-10-29', status: 'Pending' },
+    { id: 'P004', userId: 'MG99X1F', amount: 1200.00, date: '2025-10-30', status: 'Pending' },
   ],
   paymentVerificationQueue: [
     { id: 'V001', userId: 'SR11Z0G', amount: 99.00, date: '2025-10-29', package: 'Basic', status: 'Pending' },
     { id: 'V002', userId: 'EP40Q2K', amount: 199.00, date: '2025-10-28', package: 'Prime', status: 'Pending' },
+    { id: 'V003', userId: 'RS77Y2H', amount: 99.00, date: '2025-10-30', package: 'Basic', status: 'Pending' },
   ],
   trends: [
     { month: 'Jan', revenue: 100, users: 50 },
@@ -155,215 +175,440 @@ const mockQueueData: {
     { month: 'Apr', revenue: 180, users: 95 },
     { month: 'May', revenue: 210, users: 110 },
     { month: 'Jun', revenue: 250, users: 130 },
+    { month: 'Jul', revenue: 290, users: 145 },
+    { month: 'Aug', revenue: 320, users: 160 },
+    { month: 'Sep', revenue: 380, users: 180 },
+    { month: 'Oct', revenue: 420, users: 200 },
   ]
 };
 
 const mockAdminData: AdminData = {
-  totalRevenue: 250000.00,
-  totalPayouts: 185000.00,
-  totalLiability: 65000.00,
+  totalRevenue: 285000.00,
+  totalPayouts: 205000.00,
+  totalLiability: 80000.00,
   affiliateCount: ALL_USERS_DATA.filter(u => u.role === 'Affiliate').length,
 };
 
-// --- Helper Components & Icons ---
-interface IconProps {
-  d: string;
-  className?: string;
-  strokeWidth?: string;
-  style?: React.CSSProperties;
-}
+// --- Premium UI Components ---
 
-const Icon: React.FC<IconProps> = ({ d, className = 'w-5 h-5', strokeWidth = '2', style = { color: COLORS.GOLD_ACCENT_LIGHT } }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" style={style}>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d={d} />
-  </svg>
-);
-
-const icons = {
-  dashboard: "M3 12L12 3l9 9H3zM12 5.69l-7 7V20h14v-7l-7-7z",
-  global: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.9-7-7.93 0-.35.03-.68.08-1.01l4.06-4.06 1.01 1.01 4-4 1.01 1.01-4.06 4.06c.33.05.66.08 1.01.08 4.03 0 7.44 3.05 7.93 7h-7.93v7.93z",
-  monitor: "M10 14l2-2-6-6-2 2 6 6zM15 15l-1 1 3 3 1-1-3-3zM3 17V3a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2z",
-  users: "M17 20v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M12 14c-2.76 0-5 2.24-5 5v1h10v-1c0-2.76-2.24-5-5-5zM12 12a4 4 0 100-8 4 4 0 000 8z",
-  create: "M12 4v16m8-8H4",
-  queue: "M14 10h-4v4h4v-4zM21 3h-3V1h-2v2H8V1H6v2H3a2 2 0 00-2 2v14a2 2 0 002 2h18a2 2 0 002-2V5a2 2 0 00-2-2zM21 19H3V9h18v10z",
-  verify: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-  trend: "M13 7h-2v8h2V7zm4-2h-2v10h2V5zM9 9H7v6h2V9zM20 18H4v2h16v-2z",
-  link: "M10 6a2 2 0 012-2h5a2 2 0 012 2v5a2 2 0 01-2 2h-2M7 14v5a2 2 0 002 2h5a2 2 0 002-2v-2M9 9l5 5",
-  clicks: "M12 21c-4.97 0-9-4.03-9-9s4.03-9 9-9 9 4.03 9 9-4.03 9-9 9zm0-16c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm-.5 6h-2v2h3v-2.5h-1v-1.5z",
-  search: "M19 19l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
-  facebook: "M20 12c0-4.418-3.582-8-8-8S4 7.582 4 12c0 3.987 2.91 7.288 6.745 7.854V15h-2.5V12h2.5V9.5c0-2.215 1.343-3.41 3.313-3.41 0.944 0 1.763 0.07 1.996 0.1v2.32H15.8c-1.077 0-1.285 0.51-1.285 1.26V12h2.5L16 15h-2.5v4.854C17.09 19.288 20 15.987 20 12z",
-  youtube: "M10 9l5 3-5 3V9zM20 5H4c-1.104 0-2 0.896-2 2v10c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896-2-2V7c0-1.104-0.896-2-2-2z",
-  instagram: "M12 7a5 5 0 100 10 5 5 0 000-10zM19 4H5c-1.1 0-2 0.9-2 2v12c0 1.1 0.9 2 2 2h14c1.1 0 2-0.9-2-2V6c0-1.1-0.9-2-2-2zM17.5 8.5a1 1 0 11-2 0 1 1 0 012 0z",
-  twitter: "M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5v-1a4.84 4.84 0 001.3-3.32z",
-  tiktok: "M20 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2V2M15 12a3 3 0 11-6 0 3 3 0 016 0zM11 7v14a1 1 0 01-1 1H7a1 1 0 01-1-1V7a1 1 0 011-1h3.75a.25.25 0 00.25-.25V3a1 1 0 011-1h3a1 1 0 011 1v.25a.25.25 0 00.25.25H18a1 1 0 011 1v4a1 1 0 01-1 1h-2v4z",
-};
-
-const navItems = [
-  { id: 'global', label: 'Global Overview', icon: icons.global },
-  { id: 'taskmonitoring', label: 'Task Monitoring', icon: icons.monitor },
-  { id: 'privatetasks', label: 'Private Task Clicks', icon: icons.clicks },
-  { id: 'userlist', label: 'All Users List', icon: icons.users },
-  { id: 'affiliatelist', label: 'Affiliates Only', icon: icons.users },
-  { id: 'createuser', label: 'Create User', icon: icons.create },
-  { id: 'payoutqueue', label: 'Payout Queue', icon: icons.queue },
-  { id: 'paymentverify', label: 'Payment Verification', icon: icons.verify },
-  { id: 'trend', label: 'Performance Trends', icon: icons.trend },
-];
-
-const PLATFORMS: { id: keyof TaskMonitoringEntry['platforms']; label: string; icon: string; color: string }[] = [
-  { id: 'facebook', label: 'Facebook', icon: icons.facebook, color: '#1877F2' },
-  { id: 'youtube', label: 'YouTube', icon: icons.youtube, color: '#FF0000' },
-  { id: 'instagram', label: 'Instagram', icon: icons.instagram, color: '#C13584' },
-  { id: 'twitter', label: 'Twitter', icon: icons.twitter, color: '#1DA1F2' },
-  { id: 'tiktok', label: 'TikTok', icon: icons.tiktok, color: '#69C9D0' },
-];
-
-const TASK_CATEGORIES: { id: keyof PlatformTasks; label: string; icon: string }[] = [
-  { id: 'follow', label: 'Follow Task', icon: icons.users },
-  { id: 'video', label: 'Video View', icon: icons.youtube },
-  { id: 'post', label: 'Post/Content Share', icon: icons.instagram },
-];
-
-interface CardProps {
+const GlassCard: React.FC<{
   children: React.ReactNode;
   className?: string;
-}
+  hover?: boolean;
+  onClick?: () => void;
+  delay?: number;
+}> = ({ children, className = '', hover = true, onClick, delay = 0 }) => {
+  return (
+    <motion.div
+      onClick={onClick}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: delay * 0.1 }}
+      whileHover={hover ? { scale: 1.02, y: -4, transition: { duration: 0.2 } } : {}}
+      className={`${THEME.effects.glass} rounded-2xl border border-white/5 bg-gradient-to-br from-white/5 to-white/2 hover:border-white/10 transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      style={{
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+      }}
+    >
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#b68938]/0 via-[#b68938]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="relative z-10">
+        {children}
+      </div>
+    </motion.div>
+  );
+};
 
-const Card: React.FC<CardProps> = ({ children, className = '' }) => (
-  <div
-    className={`bg-white/5 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/10 transition-shadow duration-300 hover:shadow-2xl ${className}`}
-    style={{ background: COLORS.CARD_DARK, boxShadow: '0 10px 30px rgba(0, 0, 0, 0.6)', color: COLORS.TEXT_WHITE }}
+const GradientText: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = '' }) => (
+  <motion.span
+    className={`bg-clip-text text-transparent font-bold ${className}`}
+    style={{ backgroundImage: THEME.colors.goldGradient }}
+    animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+    transition={{ duration: 5, repeat: Infinity }}
   >
     {children}
-  </div>
+  </motion.span>
 );
 
-interface StatusBadgeProps {
-  status: string;
-}
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const getConfig = () => {
+    switch (status) {
+      case 'Active':
+      case 'Approved':
+        return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' };
+      case 'Inactive':
+      case 'Rejected':
+        return { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/20' };
+      case 'Pending':
+      case 'In Review':
+      case 'Pending Verification':
+        return { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' };
+      case 'Package Timed Out':
+        return { bg: 'bg-rose-900/20', text: 'text-rose-300', border: 'border-rose-600/30' };
+      default:
+        return { bg: 'bg-zinc-500/10', text: 'text-zinc-400', border: 'border-zinc-500/20' };
+    }
+  };
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-  let colorClass;
-  switch (status) {
-    case 'Active':
-    case 'Approved':
-      colorClass = 'bg-green-600/20 text-green-400';
-      break;
-    case 'Inactive':
-    case 'Rejected':
-      colorClass = 'bg-red-600/20 text-red-400';
-      break;
-    case 'Pending':
-    case 'In Review':
-    case 'Pending Verification':
-      colorClass = 'bg-yellow-600/20 text-yellow-400';
-      break;
-    case 'Package Timed Out':
-      colorClass = 'bg-red-900/40 text-red-300 border border-red-600/50';
-      break;
-    default:
-      colorClass = 'bg-zinc-600/20 text-zinc-400';
-  }
+  const config = getConfig();
   return (
-    <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
+    <motion.span
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border} backdrop-blur-sm`}
+    >
       {status}
-    </span>
+    </motion.span>
+  );
+};
+
+// --- Enhanced Magnetic Button ---
+const MagneticButton = ({ children, className = "", onClick = () => {} }) => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    setPosition({ x: x * 0.3, y: y * 0.3 });
+  };
+
+  const handleMouseLeave = () => {
+    setPosition({ x: 0, y: 0 });
+    setIsHovered(false);
+  };
+
+  return (
+    <motion.button
+      ref={buttonRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      onClick={onClick}
+      animate={{ x: position.x, y: position.y }}
+      transition={{ type: "spring", stiffness: 150, damping: 15 }}
+      className={`relative px-6 py-3 rounded-full bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black font-semibold text-sm uppercase tracking-widest hover:shadow-[0_0_40px_rgba(182,137,56,0.6)] active:scale-95 flex items-center gap-2 overflow-hidden group ${className}`}
+      style={{ boxShadow: '0 4px 20px rgba(182, 137, 56, 0.3)' }}
+    >
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent"
+        initial={{ x: '-100%' }}
+        animate={{ x: isHovered ? '100%' : '-100%' }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      />
+      <span className="relative z-10 flex items-center gap-2">
+        {children}
+      </span>
+    </motion.button>
+  );
+};
+
+// --- Floating Particles Background ---
+const FloatingParticles = () => {
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      {[...Array(20)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-[1px] h-[1px] bg-gradient-to-r from-[#b68938] to-[#e1ba73] rounded-full"
+          initial={{
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+          }}
+          animate={{
+            y: [null, -20, 20, 0],
+            x: [null, 10, -10, 0],
+          }}
+          transition={{
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+            delay: Math.random() * 2,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// --- Floating Navigation Bar ---
+const FloatingNavBar: React.FC<{
+  activeView: string;
+  setActiveView: (view: string) => void;
+  scrollY: number;
+}> = ({ activeView, setActiveView, scrollY }) => {
+  const navItems = [
+    { id: 'global', label: 'Overview', icon: '🌐' },
+    { id: 'taskmonitoring', label: 'Tasks', icon: '📊' },
+    { id: 'privatetasks', label: 'Private', icon: '🎯' },
+    { id: 'userlist', label: 'Users', icon: '👥' },
+    { id: 'affiliatelist', label: 'Affiliates', icon: '🌟' },
+    { id: 'createuser', label: 'Create', icon: '➕' },
+    { id: 'payoutqueue', label: 'Payouts', icon: '💰' },
+    { id: 'paymentverify', label: 'Verify', icon: '✅' },
+    { id: 'trend', label: 'Trends', icon: '📈' },
+  ];
+
+  const navOpacity = useTransform(scrollY, [0, 100], [0, 1]);
+  const navBlur = useTransform(scrollY, [0, 100], [0, 12]);
+  const navScale = useTransform(scrollY, [0, 100], [0.95, 1]);
+  const navY = useTransform(scrollY, [0, 100], [-20, 0]);
+
+  return (
+    <motion.nav
+      style={{
+        opacity: navOpacity,
+        backdropFilter: `blur(${navBlur}px)`,
+        scale: navScale,
+        y: navY,
+      }}
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden lg:block"
+    >
+      <div className="flex items-center gap-1 p-1 rounded-2xl bg-black/40 border border-white/10 shadow-2xl">
+        {navItems.map((item) => (
+          <motion.button
+            key={item.id}
+            onClick={() => setActiveView(item.id)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-200 ${
+              activeView === item.id
+                ? 'bg-gradient-to-r from-[#b68938]/20 to-[#e1ba73]/10 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span className="text-lg">{item.icon}</span>
+            <span className="text-sm font-medium">{item.label}</span>
+          </motion.button>
+        ))}
+      </div>
+    </motion.nav>
   );
 };
 
 // --- View Components ---
+const GlobalOverviewView: React.FC<{ data: DashboardData }> = ({ data }) => {
+  const stats = [
+    {
+      label: 'Total Revenue',
+      value: `$${data.totalRevenue.toLocaleString()}`,
+      trend: '+12.5%',
+      description: 'Monthly growth',
+      icon: '💰'
+    },
+    {
+      label: 'Total Liability',
+      value: `$${data.totalLiability.toLocaleString()}`,
+      trend: '-3.2%',
+      description: 'Outstanding balance',
+      icon: '📊'
+    },
+    {
+      label: 'Active Affiliates',
+      value: data.affiliateCount.toString(),
+      trend: '+8',
+      description: 'Active this month',
+      icon: '👥'
+    },
+    {
+      label: 'Pending Payouts',
+      value: mockQueueData.payoutQueue.length.toString(),
+      trend: '3 New',
+      description: 'Awaiting processing',
+      icon: '⏳'
+    },
+  ];
 
-interface GlobalOverviewViewProps {
-  data: DashboardData;
-}
-
-const GlobalOverviewView: React.FC<GlobalOverviewViewProps> = ({ data }) => {
-    // FIX: Safely determine the latest trend to avoid index access errors if data.trends is empty
-    const latestTrend: TrendItem | undefined = data.trends.length > 0 ? data.trends[data.trends.length - 1] : undefined;
-
-    // Helper to safely format the trend value
-    const getTrendValue = (key: keyof TrendItem): string => {
-        // Fallback if no trend data exists
-        if (!latestTrend) return 'N/A';
-        
-        // Use optional chaining for safety if latestTrend was defined but the key was missing (though types prevent this)
-        const value = latestTrend[key];
-
-        if (typeof value === 'number') {
-            // Simple logic for demonstration (assuming positive means up, otherwise flat/down)
-            const symbol = value >= 0 ? '↑' : '↓';
-            return `${Math.abs(value).toFixed(0)}% ${symbol}`;
-        }
-        return 'Stable'; // Default for non-numeric or unexpected values
-    };
-
-    const stats = [
-        { label: 'Total Revenue', value: data.totalRevenue, icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m4-4h6m-6 0a1 1 0 100 2 1 1 0 000-2zm-2-7h6a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2h4", color: COLORS.GREEN_SUCCESS, trend: getTrendValue('revenue') },
-        { label: 'Total Liability', value: data.totalLiability, icon: "M12 8c1.657 0 3 .895 3 2s-1.343 2-3 2a3 3 0 01-3-2c0-1.105 1.343-2 3-2zm0 0V3m0 3v2", color: COLORS.RED_ALERT, trend: 'Stable' },
-        { label: 'Total Affiliates', value: data.affiliateCount, icon: "M17 20v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2", color: COLORS.BLUE_INFO, trend: getTrendValue('users') },
-        { label: 'Payout Queue', value: mockQueueData.payoutQueue.length, icon: "M14 10h-4v4h4v-4zM21 3h-3V1h-2v2H8V1H6v2H3a2 2 0 00-2 2v14a2 2 0 002 2h18a2 2 0 002-2V5a2 2 0 00-2-2z", color: COLORS.ORANGE_WARN, trend: '3 New' },
-    ];
-
-    return (
-        <div className="p-4 sm:p-8 space-y-8">
-            <h1 className="text-4xl font-extrabold text-white tracking-tight sm:tracking-widest border-b border-gold-600/30 pb-4">
-                SRK Dashboard
-            </h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat) => (
-                    <Card key={stat.label} className="flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                            <p className="text-lg font-semibold text-zinc-300">{stat.label}</p>
-                            <Icon d={stat.icon} className="w-8 h-8" style={{ color: stat.color }} strokeWidth="1.5" />
-                        </div>
-                        <div className="mt-4">
-                            <p className="text-4xl font-extrabold" style={{ color: COLORS.GOLD_ACCENT_LIGHT }}>
-                                {stat.label.includes('Total') ? `$${stat.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : stat.value}
-                            </p>
-                            <div className="mt-2 text-sm font-medium flex items-center gap-1" style={{ color: stat.color }}>
-                                {stat.trend} Last Month
-                            </div>
-                        </div>
-                    </Card>
-                ))}
-            </div>
-
-            <PerformanceTrendView data={data} className="lg:col-span-full" />
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 sm:p-6 space-y-8"
+    >
+      {/* Hero Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <motion.h1 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-4xl font-bold text-white"
+          >
+            <GradientText>Global Overview</GradientText>
+          </motion.h1>
+          <motion.p 
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-gray-400 mt-2"
+          >
+            Real-time monitoring of platform performance
+          </motion.p>
         </div>
-    );
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="flex items-center gap-2 text-sm text-gray-400"
+        >
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-2 h-2 rounded-full bg-emerald-500"
+          />
+          <span>Live Data</span>
+          <span className="text-gray-500">•</span>
+          <span>Updated just now</span>
+        </motion.div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, index) => (
+          <GlassCard key={stat.label} hover delay={index}>
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-400 mb-2">{stat.label}</p>
+                  <motion.p 
+                    initial={{ scale: 0.9 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="text-3xl font-bold text-white"
+                  >
+                    {stat.value}
+                  </motion.p>
+                </div>
+                <motion.div 
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.6 }}
+                  className="p-3 rounded-xl bg-gradient-to-br from-[#b68938]/20 to-transparent"
+                >
+                  <span className="text-xl">{stat.icon}</span>
+                </motion.div>
+              </div>
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
+                <span className="text-sm text-gray-500">{stat.description}</span>
+                <motion.span 
+                  whileHover={{ scale: 1.1 }}
+                  className={`text-sm font-medium px-2 py-1 rounded-full ${
+                    stat.trend.startsWith('+') 
+                      ? 'bg-emerald-500/10 text-emerald-400' 
+                      : 'bg-rose-500/10 text-rose-400'
+                  }`}
+                >
+                  {stat.trend}
+                </motion.span>
+              </div>
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+
+      {/* Performance Chart */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <GlassCard>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-xl font-bold text-white">Performance Trends</h2>
+                <p className="text-gray-400 text-sm">Revenue & User Growth</p>
+              </div>
+              <div className="relative">
+                <select className="bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white text-sm appearance-none pr-8">
+                  <option>Last 6 months</option>
+                  <option>Last year</option>
+                  <option>All time</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <span className="text-gray-400">▼</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              {data.trends.slice(-6).map((trend, index) => (
+                <motion.div 
+                  key={trend.month}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="flex items-center gap-4"
+                >
+                  <div className="w-16 text-right">
+                    <span className="text-sm font-medium text-white">{trend.month}</span>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-emerald-400 font-medium">Revenue: ${trend.revenue}K</span>
+                      <span className="text-white font-bold">+{(trend.revenue / 10).toFixed(1)}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-800/50 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(trend.revenue / 420) * 100}%` }}
+                        transition={{ duration: 1, delay: index * 0.2 }}
+                        className="h-full rounded-full"
+                        style={{ background: THEME.colors.goldGradient }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-blue-400 font-medium">Users: {trend.users}</span>
+                      <span className="text-white font-bold">+{(trend.users / 2).toFixed(1)}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-800/50 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(trend.users / 200) * 100}%` }}
+                        transition={{ duration: 1, delay: index * 0.2 + 0.1 }}
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: THEME.colors.blueInfo }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </GlassCard>
+      </motion.div>
+    </motion.div>
+  );
 };
 
-// --- Task Monitoring View (Enhanced with Search) ---
-interface TaskMonitoringViewProps {
-    data: DashboardData;
-}
-
-const TaskMonitoringView: React.FC<TaskMonitoringViewProps> = ({ data }) => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  // FIX: Ensure safe initialization by checking for array presence
-  const initialUserId = data.taskMonitoringData.length > 0 ? data.taskMonitoringData[0].userId : null;
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(initialUserId);
-  const [activePlatform, setActivePlatform] = useState<keyof TaskMonitoringEntry['platforms']>(PLATFORMS[0].id);
+const TaskMonitoringView: React.FC<{ data: DashboardData }> = ({ data }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(
+    data.taskMonitoringData.length > 0 ? data.taskMonitoringData[0].userId : null
+  );
+  const [activePlatform, setActivePlatform] = useState<'facebook' | 'youtube' | 'instagram' | 'twitter' | 'tiktok'>('facebook');
   const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
 
   const usersWithTasks: UserWithTasks[] = useMemo(() => {
     return data.allUsers
       .filter(u => data.taskMonitoringData.some(t => t.userId === u.id))
       .map(user => {
-        // Safe access to taskData is ensured by the filter above and casting
-        const taskData = data.taskMonitoringData.find(t => t.userId === user.id) as TaskMonitoringEntry;
-        
+        const taskData = data.taskMonitoringData.find(t => t.userId === user.id)!;
         const platforms = Object.values(taskData.platforms);
         
         let totalRequired = 0;
         let totalCompleted = 0;
         
-        // Calculate totals dynamically using the keys of PlatformTasks
         platforms.forEach(p => {
-            (Object.keys(p) as Array<keyof PlatformTasks>).forEach(taskKey => {
-                totalRequired += p[taskKey].total;
-                totalCompleted += p[taskKey].completed;
-            });
+          (Object.keys(p) as Array<keyof PlatformTasks>).forEach(taskKey => {
+            totalRequired += p[taskKey].total;
+            totalCompleted += p[taskKey].completed;
+          });
         });
 
         const completionPercentage = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
@@ -373,7 +618,7 @@ const TaskMonitoringView: React.FC<TaskMonitoringViewProps> = ({ data }) => {
           status: userStatuses[user.id] || user.status,
           completionPercentage,
           taskData,
-        } as UserWithTasks;
+        };
       })
       .filter(user =>
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -382,536 +627,1187 @@ const TaskMonitoringView: React.FC<TaskMonitoringViewProps> = ({ data }) => {
       .sort((a, b) => b.completionPercentage - a.completionPercentage);
   }, [data.allUsers, data.taskMonitoringData, userStatuses, searchQuery]);
 
-  // Set the first item in the filtered list as selected if the current one is filtered out
   useEffect(() => {
-      if (!usersWithTasks.find(u => u.id === selectedUserId) && usersWithTasks.length > 0) {
-          setSelectedUserId(usersWithTasks[0].id);
-      } else if (usersWithTasks.length === 0) {
-          setSelectedUserId(null);
-      }
+    if (!usersWithTasks.find(u => u.id === selectedUserId) && usersWithTasks.length > 0) {
+      setSelectedUserId(usersWithTasks[0].id);
+    }
   }, [usersWithTasks, selectedUserId]);
 
-
   const currentUser = usersWithTasks.find(u => u.id === selectedUserId);
-  // Optional chaining ensures safe access even if currentUser or taskData is null/undefined
-  const platformTasks: PlatformTasks | undefined = currentUser?.taskData?.platforms[activePlatform];
+  const platformTasks = currentUser?.taskData?.platforms[activePlatform];
 
-  const handleTimeoutPackage = (): void => {
+  const handleTimeoutPackage = () => {
     if (!currentUser) return;
-
-    // Custom modal/console log replacement for alert()
-    // Using window.confirm as a temporary solution as requested in the instructions
     const isConfirmed = window.confirm(
       `Confirm TIMEOUT for ${currentUser.name} (${currentUser.id})? This will suspend earnings for 7 days.`
     );
-
     if (isConfirmed) {
       setUserStatuses(prev => ({
         ...prev,
         [currentUser.id]: 'Package Timed Out'
       }));
-      console.log(`Package for ${currentUser.name} has been TIMED OUT.`);
     }
   };
 
-  interface TaskDetailCardProps {
-    categoryId: keyof PlatformTasks;
-    categoryLabel: string;
-    categoryIcon: string;
-    tasks: TaskDetail;
-  }
+  const platforms = [
+    { id: 'facebook' as const, label: 'Facebook', color: '#1877F2', icon: '📘' },
+    { id: 'youtube' as const, label: 'YouTube', color: '#FF0000', icon: '📺' },
+    { id: 'instagram' as const, label: 'Instagram', color: '#C13584', icon: '📷' },
+    { id: 'twitter' as const, label: 'Twitter', color: '#1DA1F2', icon: '🐦' },
+    { id: 'tiktok' as const, label: 'TikTok', color: '#69C9D0', icon: '🎵' },
+  ];
 
-  const TaskDetailCard: React.FC<TaskDetailCardProps> = ({ categoryId, categoryLabel, categoryIcon, tasks }) => {
-    const { total, completed, status, link } = tasks;
-    const completePercent = total > 0 ? Math.round((completed / total) * 100) : (total === 0 ? 100 : 0);
-    const platformConfig = PLATFORMS.find(p => p.id === activePlatform);
-    const color = platformConfig?.color || COLORS.GOLD_ACCENT_LIGHT;
-    const isNA = status === 'N/A';
+  const taskCategories = [
+    { id: 'follow' as const, label: 'Follow Task' },
+    { id: 'video' as const, label: 'Video View' },
+    { id: 'post' as const, label: 'Post/Content Share' },
+  ];
 
-    if (isNA) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 sm:p-6 space-y-8"
+    >
+      <div>
+        <h1 className="text-4xl font-bold text-white">
+          <GradientText>Task Monitoring</GradientText>
+        </h1>
+        <p className="text-gray-400 mt-2">Track and manage affiliate task completion</p>
+      </div>
 
-    const statusColor =
-      status === 'Approved' ? COLORS.GREEN_SUCCESS :
-      status === 'Pending' ? COLORS.RED_ALERT :
-      status === 'In Review' ? COLORS.BLUE_INFO : COLORS.TEXT_WHITE;
+      <GlassCard>
+        <div className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Panel - User List */}
+            <div className="lg:col-span-1">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Search Affiliates</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by name or ID..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 pl-10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent"
+                    />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                      <span className="text-gray-500">🔍</span>
+                    </div>
+                  </div>
+                </div>
 
-    return (
-      <Card className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Icon d={categoryIcon} className="w-6 h-6" style={{ color }} strokeWidth="2.5" />
-            <h3 className="text-lg font-bold text-white uppercase tracking-wider">{categoryLabel}</h3>
-          </div>
-          <span className="text-xl font-extrabold" style={{ color: COLORS.GOLD_ACCENT_LIGHT }}>{completePercent}%</span>
-        </div>
-        <div className="w-full bg-zinc-700 rounded-full h-2.5">
-          <div
-            className="h-2.5 rounded-full transition-all duration-500"
-            style={{ width: `${completePercent}%`, backgroundColor: color }}
-          />
-        </div>
-        <div className="flex justify-between items-center text-sm text-zinc-400">
-          <span>{completed} / {total} Required Actions</span>
-          <span className="font-semibold" style={{ color: statusColor }}>Status: {status}</span>
-        </div>
-        {link && (
-          <div className="flex flex-col gap-2 mt-2 p-3 bg-white/5 rounded-lg border border-white/5">
-            <div className="text-xs text-zinc-300 font-medium mb-1">Affiliate Proof Link:</div>
-            <a
-              href={`https://${link}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-400 truncate hover:text-blue-300 transition-colors"
-            >
-              <Icon d={icons.link} className="w-4 h-4 inline mr-1" style={{ color: COLORS.BLUE_INFO }} />
-              {link}
-            </a>
-            {(status === 'Pending' || status === 'In Review') && (
-              <div className="flex gap-3 justify-end mt-3 border-t border-white/5 pt-3">
-                <button
-                  onClick={() => console.log(`Approved task: ${currentUser?.id} - ${activePlatform} - ${categoryId}`)}
-                  className="px-3 py-1.5 rounded-lg bg-green-600/20 text-green-400 hover:bg-green-600/40 transition-colors text-xs font-medium"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => console.log(`Rejected task: ${currentUser?.id} - ${activePlatform} - ${categoryId}`)}
-                  className="px-3 py-1.5 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/40 transition-colors text-xs font-medium"
-                >
-                  Reject
-                </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Select Affiliate ({usersWithTasks.length})
+                  </label>
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {usersWithTasks.map((user, index) => (
+                      <motion.button
+                        key={user.id}
+                        onClick={() => setSelectedUserId(user.id)}
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className={`w-full text-left p-4 rounded-xl transition-all duration-200 group ${
+                          selectedUserId === user.id
+                            ? 'bg-gradient-to-r from-white/10 to-white/5 border border-white/20 shadow-lg'
+                            : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-white group-hover:text-[#e1ba73] transition-colors">{user.name}</p>
+                            <p className="text-sm text-gray-400">{user.id}</p>
+                          </div>
+                          <div className="text-right">
+                            <motion.div 
+                              whileHover={{ scale: 1.1 }}
+                              className="text-xl font-bold text-white"
+                            >
+                              {user.completionPercentage}%
+                            </motion.div>
+                            <StatusBadge status={user.status} />
+                          </div>
+                        </div>
+                        <div className="mt-3 w-full bg-gray-800/50 rounded-full h-2 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${user.completionPercentage}%` }}
+                            transition={{ duration: 1, delay: index * 0.1 }}
+                            className="h-2 rounded-full"
+                            style={{ background: THEME.colors.goldGradient }}
+                          />
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* Right Panel - Task Details */}
+            <div className="lg:col-span-2">
+              {currentUser ? (
+                <div className="space-y-6">
+                  {/* User Header */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <motion.h2 
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        className="text-2xl font-bold text-white"
+                      >
+                        {currentUser.name}
+                      </motion.h2>
+                      <div className="flex items-center gap-3 mt-2">
+                        <StatusBadge status={currentUser.status} />
+                        <span className="text-gray-400">{currentUser.package}</span>
+                        <motion.span 
+                          whileHover={{ scale: 1.1 }}
+                          className="text-white font-bold bg-gradient-to-r from-[#b68938]/20 to-[#e1ba73]/20 px-3 py-1 rounded-full"
+                        >
+                          ${currentUser.balance.toFixed(2)}
+                        </motion.span>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleTimeoutPackage}
+                      className="px-4 py-2 bg-gradient-to-r from-rose-600/20 to-rose-700/20 text-rose-300 border border-rose-600/30 rounded-lg hover:bg-rose-600/30 transition-colors flex items-center gap-2 text-sm"
+                    >
+                      <span>⏱️</span>
+                      Timeout Package
+                    </motion.button>
+                  </div>
+
+                  {/* Platform Tabs */}
+                  <div className="flex flex-wrap gap-2">
+                    {platforms.map(platform => (
+                      <motion.button
+                        key={platform.id}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setActivePlatform(platform.id)}
+                        className={`px-4 py-3 rounded-lg flex items-center gap-2 transition-all ${
+                          activePlatform === platform.id
+                            ? 'bg-white/10 text-white shadow-lg'
+                            : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="text-lg">{platform.icon}</span>
+                        <span className="font-medium">{platform.label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  {/* Task Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {taskCategories.map(category => {
+                      const tasks = platformTasks?.[category.id];
+                      if (!tasks || tasks.status === 'N/A') return null;
+
+                      const percent = tasks.total > 0 ? Math.round((tasks.completed / tasks.total) * 100) : 0;
+                      const platform = platforms.find(p => p.id === activePlatform);
+
+                      return (
+                        <GlassCard key={category.id} hover>
+                          <div className="p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-white">{category.label}</span>
+                              </div>
+                              <motion.span 
+                                whileHover={{ scale: 1.2, rotate: 5 }}
+                                className="text-2xl font-bold"
+                                style={{ color: platform?.color }}
+                              >
+                                {percent}%
+                              </motion.span>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div className="w-full bg-gray-800/50 rounded-full h-2 overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${percent}%` }}
+                                  transition={{ duration: 1 }}
+                                  className="h-2 rounded-full"
+                                  style={{ backgroundColor: platform?.color }}
+                                />
+                              </div>
+                              <div className="flex justify-between text-sm text-gray-400">
+                                <span>{tasks.completed}/{tasks.total} tasks</span>
+                                <StatusBadge status={tasks.status} />
+                              </div>
+                            </div>
+
+                            {tasks.link && (
+                              <a
+                                href={`https://${tasks.link}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block text-sm text-blue-400 hover:text-blue-300 truncate hover:underline"
+                              >
+                                🔗 {tasks.link}
+                              </a>
+                            )}
+                          </div>
+                        </GlassCard>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📊</div>
+                  <p className="text-gray-400">Select an affiliate to view task details</p>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </Card>
-    );
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+};
+
+const PrivateTasksView: React.FC<{ data: DashboardData }> = ({ data }) => {
+  const [sortBy, setSortBy] = useState<'total' | 'facebook' | 'youtube'>('total');
+
+  const sortedData = useMemo(() => {
+    return [...data.privateTaskPerformance].sort((a, b) => {
+      if (sortBy === 'total') return b.totalClicks - a.totalClicks;
+      if (sortBy === 'facebook') return b.facebookClicks - a.facebookClicks;
+      return b.youtubeClicks - a.youtubeClicks;
+    });
+  }, [data.privateTaskPerformance, sortBy]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 sm:p-6 space-y-8"
+    >
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-white">
+            <GradientText>Private Task Performance</GradientText>
+          </h1>
+          <p className="text-gray-400 mt-2">Click analytics for private affiliate links</p>
+        </div>
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center gap-2"
+        >
+          <span className="text-gray-400 text-sm">Sort by:</span>
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white text-sm appearance-none pr-8"
+            >
+              <option value="total">Total Clicks</option>
+              <option value="facebook">Facebook</option>
+              <option value="youtube">YouTube</option>
+            </select>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+              <span className="text-gray-400 text-xs">▼</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      <GlassCard>
+        <div className="p-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Affiliate</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Total Clicks</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Facebook</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">YouTube</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Instagram</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedData.map((task, index) => {
+                  const user = data.allUsers.find(u => u.id === task.userId);
+                  return (
+                    <motion.tr
+                      key={task.userId}
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                    >
+                      <td className="py-4 px-6">
+                        <div>
+                          <p className="font-medium text-white">{user?.name || task.userId}</p>
+                          <p className="text-sm text-gray-400">{task.userId}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          className="text-2xl font-bold text-white"
+                        >
+                          {task.totalClicks.toLocaleString()}
+                        </motion.div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-white font-medium">{task.facebookClicks.toLocaleString()}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-white font-medium">{task.youtubeClicks.toLocaleString()}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-white font-medium">{task.instagramClicks.toLocaleString()}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <a
+                          href={task.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 text-sm truncate max-w-[200px] inline-block hover:underline flex items-center gap-1"
+                        >
+                          <span>🔗</span>
+                          {task.link}
+                        </a>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+};
+
+const UserListView: React.FC<{ data: DashboardData; filterRole?: 'Affiliate' | 'Client' }> = ({ data, filterRole }) => {
+  const users = filterRole ? data.allUsers.filter(u => u.role === filterRole) : data.allUsers;
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) || 
+                         user.id.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const statuses = Array.from(new Set(users.map(u => u.status)));
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 sm:p-6 space-y-8"
+    >
+      <div>
+        <h1 className="text-4xl font-bold text-white">
+          <GradientText>{filterRole ? `${filterRole}s` : 'All Users'}</GradientText>
+        </h1>
+        <p className="text-gray-400 mt-2">Manage platform users and their status</p>
+      </div>
+
+      <GlassCard>
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 pl-10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent"
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <span className="text-gray-500">🔍</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white text-sm appearance-none pr-8"
+                >
+                  <option value="all">All Status</option>
+                  {statuses.map(status => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <span className="text-gray-400 text-xs">▼</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">User ID</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Name</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Role</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Package</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Balance</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user, index) => (
+                  <motion.tr
+                    key={user.id}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors group"
+                  >
+                    <td className="py-4 px-6">
+                      <code className="text-sm font-mono text-white group-hover:text-[#e1ba73] transition-colors">
+                        {user.id}
+                      </code>
+                    </td>
+                    <td className="py-4 px-6">
+                      <p className="font-medium text-white">{user.name}</p>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        user.role === 'Affiliate' 
+                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-white font-medium">{user.package}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <motion.span 
+                        whileHover={{ scale: 1.1 }}
+                        className="text-2xl font-bold"
+                        style={{ color: THEME.colors.goldAccent }}
+                      >
+                        ${user.balance.toFixed(2)}
+                      </motion.span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <StatusBadge status={user.status} />
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="px-3 py-1 bg-white/5 text-white rounded-lg hover:bg-white/10 text-sm transition-colors"
+                        >
+                          Edit
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="px-3 py-1 bg-blue-500/10 text-blue-300 rounded-lg hover:bg-blue-500/20 text-sm transition-colors"
+                        >
+                          View
+                        </motion.button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+};
+
+const AffiliateListView: React.FC<{ data: DashboardData }> = (props) => 
+  <UserListView {...props} filterRole="Affiliate" />;
+
+const CreateUserView: React.FC = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    role: 'Client',
+    package: 'SRK Basic',
+    balance: '0'
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert(`User ${formData.name} created successfully!`);
+    setFormData({ name: '', email: '', role: 'Client', package: 'SRK Basic', balance: '0' });
   };
 
   return (
-    <div className="p-4 sm:p-8 space-y-8">
-      <h1 className="text-3xl font-bold text-white tracking-widest border-b border-gold-600/30 pb-4">
-        Task Monitoring Console
-      </h1>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 sm:p-6 space-y-8"
+    >
+      <div>
+        <h1 className="text-4xl font-bold text-white">
+          <GradientText>Create New User</GradientText>
+        </h1>
+        <p className="text-gray-400 mt-2">Register new clients or affiliates</p>
+      </div>
 
-      <Card className="p-4 sm:p-6">
-        <h2 className="text-xl font-semibold mb-4 text-white">Affiliate Selection</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="col-span-1 md:col-span-3 mb-4">
-                <label htmlFor="search" className="block text-sm font-medium mb-1 text-zinc-300">Search by Name or ID</label>
-                <div className="relative">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <GlassCard className="lg:col-span-2">
+          <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent"
+                    placeholder="john@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Role</label>
+                  <div className="relative">
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData({...formData, role: e.target.value})}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent appearance-none pr-8"
+                    >
+                      <option value="Client">Client</option>
+                      <option value="Affiliate">Affiliate</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <span className="text-gray-400">▼</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Package</label>
+                  <div className="relative">
+                    <select
+                      value={formData.package}
+                      onChange={(e) => setFormData({...formData, package: e.target.value})}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent appearance-none pr-8"
+                    >
+                      <option value="SRK Basic">SRK Basic ($99)</option>
+                      <option value="SRK Gold">SRK Gold ($299)</option>
+                      <option value="SRK Prime">SRK Prime ($499)</option>
+                      <option value="SRK Elite">SRK Elite ($999)</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <span className="text-gray-400">▼</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Initial Balance</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-3 text-gray-400">$</span>
                     <input
-                        id="search"
-                        type="text"
-                        placeholder="e.g., Alex Chen or AC32R7L"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full p-2.5 pl-10 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:ring-gold-500 focus:border-gold-500"
-                    />
-                    <Icon d={icons.search} className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500" style={{color: COLORS.GOLD_ACCENT_DARK}}/>
-                </div>
-                {searchQuery && usersWithTasks.length === 0 && (
-                    <p className="text-sm text-red-400 mt-2">No affiliates found matching "{searchQuery}".</p>
-                )}
-            </div>
-
-            <div className="col-span-1 md:col-span-1">
-                <label className="block text-sm font-medium mb-1 text-zinc-300">
-                    Affiliate Account (Showing: {usersWithTasks.length})
-                </label>
-                <select
-                    value={selectedUserId || ''}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="w-full p-2.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:ring-gold-500 focus:border-gold-500"
-                    disabled={usersWithTasks.length === 0}
-                >
-                    {usersWithTasks.length > 0 ? (
-                        usersWithTasks.map(user => (
-                            <option key={user.id} value={user.id}>
-                                {user.name} ({user.id}) - {user.completionPercentage}%
-                                {user.status === 'Package Timed Out' && ' [TIMED OUT]'}
-                            </option>
-                        ))
-                    ) : (
-                        <option value="">No users available</option>
-                    )}
-                </select>
-            </div>
-
-            {currentUser && (
-                <div className="md:col-span-2 space-y-4">
-                    <div className="flex justify-between items-center text-zinc-300">
-                        <span className="text-sm font-medium">Overall Task Completion:</span>
-                        <span className="text-xl font-extrabold" style={{ color: COLORS.GOLD_ACCENT_LIGHT }}>
-                            {currentUser.completionPercentage}%
-                        </span>
-                    </div>
-                    <div className="w-full bg-zinc-700 rounded-full h-3.5">
-                        <div
-                            className="h-3.5 rounded-full transition-all duration-700 ease-out"
-                            style={{
-                                width: `${currentUser.completionPercentage}%`,
-                                background: `linear-gradient(90deg, ${COLORS.GOLD_ACCENT_DARK}, ${COLORS.GOLD_ACCENT_LIGHT})`
-                            }}
-                        />
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm gap-2">
-                        <p className="text-zinc-400">
-                            Package: <span className="font-bold text-white">{currentUser.package}</span> |
-                            Status: <StatusBadge status={currentUser.status} />
-                        </p>
-
-                        <button
-                            onClick={handleTimeoutPackage}
-                            className="px-5 py-2 bg-red-600/30 text-red-400 border border-red-600/50 rounded-lg hover:bg-red-600/50 transition-all font-medium text-sm flex items-center gap-2"
-                            title="Temporarily suspend earning ability"
-                        >
-                            <Icon d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" className="w-5 h-5" style={{ color: '#EF4444' }} />
-                            Timeout Package
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-      </Card>
-
-      {currentUser && (
-        <>
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-white mt-8 mb-4 border-b border-zinc-700 pb-2">
-              Platform Details for {currentUser.name}
-            </h2>
-
-            <div className="flex flex-wrap gap-3 p-2 bg-zinc-900 rounded-xl shadow-inner">
-              {PLATFORMS.map(platform => {
-                const isActive = activePlatform === platform.id;
-                return (
-                  <button
-                    key={platform.id}
-                    onClick={() => setActivePlatform(platform.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium ${
-                      isActive ? 'bg-white/10 shadow-lg border border-gold-400/30' : 'bg-transparent hover:bg-white/5 text-zinc-400'
-                    }`}
-                    style={{ color: isActive ? platform.color : COLORS.TEXT_WHITE }}
-                  >
-                    <Icon d={platform.icon} className="w-5 h-5" style={{ color: isActive ? platform.color : COLORS.TEXT_WHITE }} />
-                    {platform.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {TASK_CATEGORIES.map(category => {
-                // Ensure platformTasks is defined and access its properties safely
-                const tasks = platformTasks ? platformTasks[category.id] : { total: 0, completed: 0, status: 'N/A' as 'N/A', link: '' };
-
-                return (
-                    <TaskDetailCard
-                    key={category.id}
-                    categoryId={category.id}
-                    categoryLabel={category.label}
-                    categoryIcon={category.icon}
-                    tasks={tasks}
-                    />
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-interface PrivateTasksViewProps {
-    data: DashboardData;
-}
-
-const PrivateTasksView: React.FC<PrivateTasksViewProps> = ({ data }) => (
-  <div className="p-4 sm:p-8 space-y-6">
-    <h1 className="text-3xl font-bold text-white tracking-widest">Private Task Clicks</h1>
-    <p className="text-zinc-400">Detailed performance metrics for private affiliate links.</p>
-    <Card>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-zinc-700">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">User ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Total Clicks</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Facebook</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">YouTube</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Instagram</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-800">
-            {data.privateTaskPerformance.map(task => (
-              <tr key={task.userId} className="hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{task.userId}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gold-400 font-semibold">{task.totalClicks.toLocaleString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{task.facebookClicks}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{task.youtubeClicks}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{task.instagramClicks}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  </div>
-);
-
-interface UserListViewProps {
-    data: DashboardData;
-    filterRole?: 'Affiliate' | 'Client';
-}
-
-const UserListView: React.FC<UserListViewProps> = ({ data, filterRole }) => {
-  const users = filterRole ? data.allUsers.filter(u => u.role === filterRole) : data.allUsers;
-
-  return (
-    <div className="p-4 sm:p-8 space-y-6">
-      <h1 className="text-3xl font-bold text-white tracking-widest">{filterRole ? `${filterRole} List` : 'All Users List'}</h1>
-      <p className="text-zinc-400">A complete list of registered users on the platform.</p>
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-zinc-700">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">User ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Package</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Balance</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800">
-              {users.map(user => (
-                <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{user.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{user.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{user.role}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gold-400">{user.package}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${user.balance.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={user.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-const AffiliateListView: React.FC<UserListViewProps> = (props) => <UserListView {...props} filterRole="Affiliate" />;
-
-const CreateUserView: React.FC = () => (
-  <div className="p-4 sm:p-8 space-y-6">
-    <h1 className="text-3xl font-bold text-white tracking-widest">Create New User</h1>
-    <p className="text-zinc-400">Form to manually register a new client or affiliate.</p>
-    <Card className="max-w-xl">
-      <div className="space-y-5">
-        <input className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:ring-gold-500 focus:border-gold-500" placeholder="Full Name" />
-        <input className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:ring-gold-500 focus:border-gold-500" placeholder="Email Address" type="email" />
-        <select className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:ring-gold-500 focus:border-gold-500">
-          <option className='bg-zinc-800'>Role: Client</option>
-          <option className='bg-zinc-800'>Role: Affiliate</option>
-        </select>
-        <select className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:ring-gold-500 focus:border-gold-500">
-          <option className='bg-zinc-800'>Package: SRK Basic</option>
-          <option className='bg-zinc-800'>Package: SRK Gold</option>
-          <option className='bg-zinc-800'>Package: SRK Prime</option>
-          <option className='bg-zinc-800'>Package: SRK Elite</option>
-        </select>
-        <button className="w-full py-3 rounded-lg font-bold text-black shadow-lg hover:shadow-gold-500/50 transition-all duration-300" style={{ background: COLORS.GOLD_ACCENT_LIGHT }}>
-          Register User
-        </button>
-      </div>
-    </Card>
-  </div>
-);
-
-const PayoutQueueView: React.FC = () => (
-  <div className="p-4 sm:p-8 space-y-6">
-    <h1 className="text-3xl font-bold text-white tracking-widest">Payout Queue</h1>
-    <p className="text-zinc-400">List of pending and in-review payout requests.</p>
-    <Card>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-zinc-700">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Request ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">User ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-800">
-            {mockQueueData.payoutQueue.map(p => (
-              <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{p.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{p.userId}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${p.amount.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{p.date}</td>
-                <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={p.status} /></td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-sm px-3 py-1 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/40 transition-colors">Process</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  </div>
-);
-
-const PaymentVerificationView: React.FC = () => (
-  <div className="p-4 sm:p-8 space-y-6">
-    <h1 className="text-3xl font-bold text-white tracking-widest">Payment Verification</h1>
-    <p className="text-zinc-400">Queue for verifying new package payments.</p>
-    <Card>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-zinc-700">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Verification ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">User ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Package</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-800">
-            {mockQueueData.paymentVerificationQueue.map(v => (
-              <tr key={v.id} className="hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{v.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{v.userId}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gold-400">{v.package}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{v.date}</td>
-                <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={v.status} /></td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-sm px-3 py-1 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/40 transition-colors">Review Doc</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  </div>
-);
-
-interface PerformanceTrendViewProps {
-    data: DashboardData;
-    className?: string;
-}
-
-const PerformanceTrendView: React.FC<PerformanceTrendViewProps> = ({ data, className = '' }) => (
-  <div className={`space-y-6 ${className}`}>
-    <h1 className="text-3xl font-bold text-white tracking-widest">Performance Trends</h1>
-    <p className="text-zinc-400">Monthly revenue and user growth trends.</p>
-    <Card>
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-white">Monthly Growth Visualization</h2>
-        <div className="flex flex-col space-y-4">
-          {data.trends.map((trend, index) => { // Using index here is acceptable as long as the array is stable
-            const maxRevenue = Math.max(...data.trends.map(t => t.revenue));
-            const revenueWidth = maxRevenue > 0 ? (trend.revenue / maxRevenue) * 100 : 0;
-
-            const maxUsers = Math.max(...data.trends.map(t => t.users));
-            const userWidth = maxUsers > 0 ? (trend.users / maxUsers) * 100 : 0;
-
-            return (
-              <div key={trend.month || index} className="flex items-start gap-4 flex-col sm:flex-row">
-                <div className="w-16 text-right text-zinc-400 font-medium shrink">{trend.month}</div>
-                <div className="grow space-y-1 w-full sm:w-auto">
-                  <div className="flex justify-between text-xs text-green-400">
-                      <span>Revenue: ${trend.revenue}K</span>
-                      <span className="font-bold">{(revenueWidth).toFixed(0)}% of Max</span>
-                  </div>
-                  <div className="w-full bg-zinc-700 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="h-2 rounded-full transition-all duration-700 ease-out"
-                      style={{ width: `${revenueWidth}%`, backgroundColor: COLORS.GREEN_SUCCESS }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs text-blue-400 pt-2">
-                      <span>Users: {trend.users}</span>
-                      <span className="font-bold">{(userWidth).toFixed(0)}% of Max</span>
-                  </div>
-                  <div className="w-full bg-zinc-700 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="h-2 rounded-full transition-all duration-700 ease-out"
-                      style={{ width: `${userWidth}%`, backgroundColor: COLORS.BLUE_INFO }}
+                      type="number"
+                      step="0.01"
+                      value={formData.balance}
+                      onChange={(e) => setFormData({...formData, balance: e.target.value})}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 pl-8 text-white focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent"
+                      placeholder="0.00"
                     />
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-        <p className="text-sm text-zinc-500 pt-4">Data scales dynamically based on the max value in the current trend set.</p>
-      </div>
-    </Card>
-  </div>
-);
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                className="w-full py-4 rounded-xl font-bold text-lg text-black transition-all duration-300 hover:shadow-[0_0_40px_rgba(182,137,56,0.5)] relative overflow-hidden"
+                style={{ background: THEME.colors.goldGradient }}
+              >
+                <span className="relative z-10">Create User Account</span>
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/20"
+                  initial={{ x: '-100%' }}
+                  whileHover={{ x: '100%' }}
+                  transition={{ duration: 0.6 }}
+                />
+              </motion.button>
+            </form>
+          </div>
+        </GlassCard>
 
-interface SidebarProps {
+        <GlassCard>
+          <div className="p-6">
+            <h3 className="text-lg font-bold text-white mb-4">Quick Stats</h3>
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+                <p className="text-sm text-gray-400">Total Users</p>
+                <p className="text-2xl font-bold text-white">142</p>
+              </div>
+              <div className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+                <p className="text-sm text-gray-400">Active Affiliates</p>
+                <p className="text-2xl font-bold text-white">86</p>
+              </div>
+              <div className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+                <p className="text-sm text-gray-400">Avg Balance</p>
+                <p className="text-2xl font-bold text-white">$1,245.50</p>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+    </motion.div>
+  );
+};
+
+const PayoutQueueView: React.FC = () => {
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const handleProcess = (id: string) => {
+    alert(`Processing payout ${id}...`);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 sm:p-6 space-y-8"
+    >
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-white">
+            <GradientText>Payout Queue</GradientText>
+          </h1>
+          <p className="text-gray-400 mt-2">Process affiliate payout requests</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-400">
+            Total: <span className="text-white font-bold">${mockQueueData.payoutQueue.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</span>
+          </span>
+        </div>
+      </div>
+
+      <GlassCard>
+        <div className="p-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">
+                    <input
+                      type="checkbox"
+                      className="rounded border-white/20 bg-black/30 checked:bg-[#b68938]"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelected(mockQueueData.payoutQueue.map(p => p.id));
+                        } else {
+                          setSelected([]);
+                        }
+                      }}
+                    />
+                  </th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Request ID</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">User ID</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Amount</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Date</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockQueueData.payoutQueue.map((payout, index) => (
+                  <motion.tr
+                    key={payout.id}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors group"
+                  >
+                    <td className="py-4 px-6">
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(payout.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelected([...selected, payout.id]);
+                          } else {
+                            setSelected(selected.filter(id => id !== payout.id));
+                          }
+                        }}
+                        className="rounded border-white/20 bg-black/30 checked:bg-[#b68938]"
+                      />
+                    </td>
+                    <td className="py-4 px-6">
+                      <code className="text-sm font-mono text-white group-hover:text-[#e1ba73] transition-colors">{payout.id}</code>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-white">{payout.userId}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <motion.span 
+                        whileHover={{ scale: 1.1 }}
+                        className="text-2xl font-bold"
+                        style={{ color: THEME.colors.goldAccent }}
+                      >
+                        ${payout.amount.toFixed(2)}
+                      </motion.span>
+                    </td>
+                    <td className="py-4 px-6 text-gray-400">{payout.date}</td>
+                    <td className="py-4 px-6">
+                      <StatusBadge status={payout.status} />
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleProcess(payout.id)}
+                          className="px-4 py-2 bg-emerald-600/20 text-emerald-300 rounded-lg hover:bg-emerald-600/30 transition-colors text-sm"
+                        >
+                          Process
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="px-4 py-2 bg-white/5 text-white rounded-lg hover:bg-white/10 text-sm transition-colors"
+                        >
+                          View
+                        </motion.button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {selected.length > 0 && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="mt-6 pt-6 border-t border-white/10 flex justify-between items-center"
+            >
+              <span className="text-gray-400">{selected.length} selected</span>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  alert(`Processing ${selected.length} payouts...`);
+                  setSelected([]);
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:shadow-lg transition-all"
+              >
+                Bulk Process Selected
+              </motion.button>
+            </motion.div>
+          )}
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+};
+
+const PaymentVerificationView: React.FC = () => {
+  const handleVerify = (id: string) => {
+    alert(`Verifying payment ${id}...`);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 sm:p-6 space-y-8"
+    >
+      <div>
+        <h1 className="text-4xl font-bold text-white">
+          <GradientText>Payment Verification</GradientText>
+        </h1>
+        <p className="text-gray-400 mt-2">Verify new package payments</p>
+      </div>
+
+      <GlassCard>
+        <div className="p-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Verification ID</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">User ID</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Package</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Amount</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Date</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockQueueData.paymentVerificationQueue.map((verification, index) => (
+                  <motion.tr
+                    key={verification.id}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors group"
+                  >
+                    <td className="py-4 px-6">
+                      <code className="text-sm font-mono text-white group-hover:text-[#e1ba73] transition-colors">{verification.id}</code>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-white">{verification.userId}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-white font-medium">{verification.package}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <motion.span 
+                        whileHover={{ scale: 1.1 }}
+                        className="text-2xl font-bold"
+                        style={{ color: THEME.colors.goldAccent }}
+                      >
+                        ${verification.amount?.toFixed(2) || '0.00'}
+                      </motion.span>
+                    </td>
+                    <td className="py-4 px-6 text-gray-400">{verification.date}</td>
+                    <td className="py-4 px-6">
+                      <StatusBadge status={verification.status} />
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleVerify(verification.id)}
+                          className="px-4 py-2 bg-blue-600/20 text-blue-300 rounded-lg hover:bg-blue-600/30 transition-colors text-sm"
+                        >
+                          Verify
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="px-4 py-2 bg-white/5 text-white rounded-lg hover:bg-white/10 text-sm transition-colors"
+                        >
+                          View Docs
+                        </motion.button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+};
+
+const PerformanceTrendView: React.FC<{ data: DashboardData }> = ({ data }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 sm:p-6 space-y-8"
+    >
+      <div>
+        <h1 className="text-4xl font-bold text-white">
+          <GradientText>Performance Trends</GradientText>
+        </h1>
+        <p className="text-gray-400 mt-2">Platform growth analytics</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GlassCard>
+          <div className="p-6">
+            <h3 className="text-lg font-bold text-white mb-6">Revenue Growth</h3>
+            <div className="space-y-6">
+              {data.trends.slice(-6).map((trend, index) => {
+                const maxRevenue = Math.max(...data.trends.map(t => t.revenue));
+                const width = (trend.revenue / maxRevenue) * 100;
+                
+                return (
+                  <motion.div
+                    key={trend.month}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="flex items-center gap-4"
+                  >
+                    <div className="w-16 text-right">
+                      <span className="text-sm font-medium text-white">{trend.month}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-emerald-400 font-medium">${trend.revenue}K</span>
+                        <span className="text-white font-bold">+{(trend.revenue / 10).toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full h-3 bg-gray-800/50 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${width}%` }}
+                          transition={{ duration: 1, delay: index * 0.1 }}
+                          className="h-full rounded-full"
+                          style={{ background: THEME.colors.goldGradient }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </GlassCard>
+
+        <GlassCard>
+          <div className="p-6">
+            <h3 className="text-lg font-bold text-white mb-6">User Growth</h3>
+            <div className="space-y-6">
+              {data.trends.slice(-6).map((trend, index) => {
+                const maxUsers = Math.max(...data.trends.map(t => t.users));
+                const width = (trend.users / maxUsers) * 100;
+                
+                return (
+                  <motion.div
+                    key={trend.month}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="flex items-center gap-4"
+                  >
+                    <div className="w-16 text-right">
+                      <span className="text-sm font-medium text-white">{trend.month}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-blue-400 font-medium">{trend.users} users</span>
+                        <span className="text-white font-bold">+{(trend.users / 2).toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full h-3 bg-gray-800/50 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${width}%` }}
+                          transition={{ duration: 1, delay: index * 0.1 + 0.1 }}
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: THEME.colors.blueInfo }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- Premium Sidebar Component ---
+const Sidebar: React.FC<{
   activeView: string;
   setActiveView: (view: string) => void;
-  navItems: typeof navItems;
-}
+  isMobile?: boolean;
+  onClose?: () => void;
+}> = ({ activeView, setActiveView, isMobile = false, onClose }) => {
+  const navItems = [
+    { id: 'global', label: 'Global Overview', icon: '🌐' },
+    { id: 'taskmonitoring', label: 'Task Monitoring', icon: '📊' },
+    { id: 'privatetasks', label: 'Private Tasks', icon: '🎯' },
+    { id: 'userlist', label: 'All Users', icon: '👥' },
+    { id: 'affiliatelist', label: 'Affiliates Only', icon: '🌟' },
+    { id: 'createuser', label: 'Create User', icon: '➕' },
+    { id: 'payoutqueue', label: 'Payout Queue', icon: '💰' },
+    { id: 'paymentverify', label: 'Payment Verification', icon: '✅' },
+    { id: 'trend', label: 'Performance Trends', icon: '📈' },
+  ];
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, navItems }) => (
-  <nav className="h-full w-full p-4 flex flex-col bg-zinc-900 border-r border-gold-600/20 shadow-2xl">
-    <div className="shrink mb-8 p-2 border-b border-gold-600/30">
-      <h2 className="text-3xl font-extrabold tracking-wider" style={{ color: COLORS.GOLD_ACCENT_LIGHT }}>SRK Admin</h2>
-      <p className="text-xs text-zinc-500">Monitoring Console</p>
-    </div>
-    <ul className="space-y-2 grow">
-      {navItems.map(item => (
-        <li key={item.id}>
-          <button
-            onClick={() => setActiveView(item.id)}
-            className={`w-full text-left flex items-center p-3 rounded-xl transition-all duration-200 font-medium ${
-              activeView === item.id
-                ? 'bg-gold-600/20 text-white shadow-lg border border-gold-400/30'
-                : 'text-zinc-300 hover:bg-zinc-800 hover:text-gold-300'
-            }`}
-          >
-            <Icon d={item.icon} className="w-5 h-5 mr-3" style={{ color: activeView === item.id ? COLORS.GOLD_ACCENT_LIGHT : 'currentColor' }} />
-            {item.label}
-          </button>
-        </li>
-      ))}
-    </ul>
-    <div className="mt-auto pt-4 border-t border-zinc-700/50">
-      <p className="text-xs text-zinc-500">SRK Monitoring V1.0</p>
-    </div>
-  </nav>
-);
+  return (
+    <>
+      {isMobile && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      <motion.div
+        initial={isMobile ? { x: -300 } : {}}
+        animate={isMobile ? { x: 0 } : {}}
+        exit={isMobile ? { x: -300 } : {}}
+        className={`
+          ${isMobile ? 'fixed inset-y-0 left-0 z-50' : 'hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0'}
+          flex-col w-64
+        `}
+      >
+        <div className="flex-1 flex flex-col">
+          {/* Logo */}
+          <div className="p-6 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <motion.div 
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                className="w-10 h-10 rounded-full bg-gradient-to-r from-[#b68938] to-[#e1ba73] flex items-center justify-center"
+              >
+                <span className="font-bold text-black text-xl">S</span>
+              </motion.div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  SRK<span className="text-[#b68938]">Admin</span>
+                </h1>
+                <p className="text-xs text-gray-400">Premium Dashboard</p>
+              </div>
+              {isMobile && onClose && (
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={onClose}
+                  className="ml-auto p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <span className="text-white">✕</span>
+                </motion.button>
+              )}
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            {navItems.map((item, index) => (
+              <motion.button
+                key={item.id}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                onClick={() => {
+                  setActiveView(item.id);
+                  if (isMobile && onClose) onClose();
+                }}
+                whileHover={{ x: 10 }}
+                className={`
+                  w-full flex items-center gap-3 p-3 rounded-xl
+                  transition-all duration-200 text-left
+                  ${activeView === item.id
+                    ? 'bg-gradient-to-r from-[#b68938]/20 to-[#b68938]/10 text-white shadow-lg border border-white/10'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                  }
+                `}
+              >
+                <div className={`
+                  w-10 h-10 rounded-lg flex items-center justify-center text-lg
+                  ${activeView === item.id ? 'bg-[#b68938]/20' : 'bg-white/5'}
+                `}>
+                  {item.icon}
+                </div>
+                <span className="font-medium">{item.label}</span>
+              </motion.button>
+            ))}
+          </nav>
+
+          {/* Footer */}
+          <div className="p-6 border-t border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center">
+                <span className="text-gray-400">⚙️</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">Admin Panel</p>
+                <p className="text-xs text-gray-400">v2.0.1</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </>
+  );
+};
 
 // --- Main App Component ---
-const data: DashboardData = {
+const App: React.FC = () => {
+  const [activeView, setActiveView] = useState('global');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isNavVisible, setIsNavVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const { scrollY } = useScroll();
+
+  const data: DashboardData = {
     allUsers: ALL_USERS_DATA,
     privateTaskPerformance: PRIVATE_TASK_PERFORMANCE_DATA,
     taskMonitoringData: TASK_MONITORING_DATA,
     trends: mockQueueData.trends,
     ...mockAdminData
-};
+  };
 
-export default function App() {
-  const [activeView, setActiveView] = useState<string>('global');
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < 50) {
+        setIsNavVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsNavVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        setIsNavVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
 
-  // FIX: Changed return type from JSX.Element to React.ReactNode for flexibility
-  const renderView = (): React.ReactNode => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  const renderView = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-96">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 rounded-full border-2 border-transparent border-t-white border-r-white"
+          />
+        </div>
+      );
+    }
+
     switch (activeView) {
       case 'global': return <GlobalOverviewView data={data} />;
       case 'taskmonitoring': return <TaskMonitoringView data={data} />;
@@ -927,40 +1823,199 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex antialiased" style={{ backgroundColor: COLORS.BG_DEEP_BLACK }}>
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-64 shrink">
-        <Sidebar activeView={activeView} setActiveView={setActiveView} navItems={navItems} />
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0f0a05] to-black" />
+        <motion.div 
+          animate={{ 
+            x: [0, 100, 0],
+            y: [0, 50, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-20 left-1/4 w-96 h-96 bg-[#b68938]/10 rounded-full blur-[128px]"
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -100, 0],
+            y: [0, -50, 0]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear", delay: 5 }}
+          className="absolute bottom-20 right-1/4 w-96 h-96 bg-[#e1ba73]/10 rounded-full blur-[128px]"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(182,137,56,0.1)_0%,transparent_50%)]" />
       </div>
 
-      {/* Mobile Toggle Button */}
-      <button
-        className="lg:hidden fixed top-4 left-4 z-40 p-3 rounded-full bg-zinc-800 text-white shadow-xl transition-all hover:ring-2 ring-gold-500/50"
-        onClick={() => setIsSidebarOpen(true)}
-      >
-        <Icon d="M4 6h16M4 12h16M4 18h16" className="w-6 h-6" style={{ color: COLORS.GOLD_ACCENT_LIGHT }} />
-      </button>
+      <FloatingParticles />
 
-      {/* Mobile Sidebar Modal */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black opacity-70" onClick={() => setIsSidebarOpen(false)}></div>
-          <div className="relative w-64 h-full bg-zinc-900 transform transition-transform duration-300 ease-in-out">
-            <Sidebar activeView={activeView} setActiveView={(id) => { setActiveView(id); setIsSidebarOpen(false); }} navItems={navItems} />
-            <button
-                className="absolute top-4 right-4 p-2 text-white bg-zinc-800 rounded-full hover:bg-zinc-700"
-                onClick={() => setIsSidebarOpen(false)}
-            >
-                <Icon d="M6 18L18 6M6 6l12 12" className="w-6 h-6" style={{ color: COLORS.GOLD_ACCENT_LIGHT }}/>
-            </button>
+      {/* Desktop Sidebar */}
+      <Sidebar
+        activeView={activeView}
+        setActiveView={setActiveView}
+      />
+
+      {/* Mobile Sidebar */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <Sidebar
+            activeView={activeView}
+            setActiveView={setActiveView}
+            isMobile
+            onClose={() => setIsSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Floating Navigation Bar */}
+      <FloatingNavBar
+        activeView={activeView}
+        setActiveView={setActiveView}
+        scrollY={scrollY}
+      />
+
+      {/* Main Content */}
+      <main ref={mainRef} className="lg:ml-64 min-h-screen">
+        {/* Top Bar */}
+        <motion.header
+          initial={{ y: 0 }}
+          animate={{ y: isNavVisible ? 0 : -100 }}
+          transition={{ duration: 0.3 }}
+          className="sticky top-0 z-30 p-4 sm:p-6 border-b border-white/10 bg-black/80 backdrop-blur-xl"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <span className="text-white text-lg">☰</span>
+              </motion.button>
+              <div>
+                <h2 className="text-xl font-bold text-white">
+                  {activeView === 'global' ? 'Global Overview' :
+                   activeView === 'taskmonitoring' ? 'Task Monitoring' :
+                   activeView === 'privatetasks' ? 'Private Tasks' :
+                   activeView === 'userlist' ? 'All Users' :
+                   activeView === 'affiliatelist' ? 'Affiliates Only' :
+                   activeView === 'createuser' ? 'Create User' :
+                   activeView === 'payoutqueue' ? 'Payout Queue' :
+                   activeView === 'paymentverify' ? 'Payment Verification' :
+                   activeView === 'trend' ? 'Performance Trends' : 'Dashboard'}
+                </h2>
+                <p className="text-sm text-gray-400">
+                  Last updated: Today, 2:45 PM
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <motion.div 
+                whileHover={{ scale: 1.1 }}
+                className="hidden sm:flex items-center gap-2 text-sm text-gray-400 bg-white/5 px-3 py-1 rounded-full"
+              >
+                <motion.div 
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="w-2 h-2 rounded-full bg-emerald-500"
+                />
+                <span>Live</span>
+              </motion.div>
+              <MagneticButton className="px-4 py-2 text-sm" onClick={() => window.location.reload()}>
+                <span>🔄</span>
+                Refresh Data
+              </MagneticButton>
+            </div>
           </div>
-        </div>
-      )}
+        </motion.header>
 
-      {/* Main Content Area */}
-      <main className="grow overflow-y-auto">
-        {renderView()}
+        {/* Content */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="p-4 sm:p-6"
+        >
+          {renderView()}
+        </motion.div>
+
+        {/* Footer */}
+        <footer className="mt-8 p-6 border-t border-white/10 text-center text-gray-400 text-sm">
+          <p>© 2024 SRK Admin Dashboard. All rights reserved.</p>
+          <p className="mt-1">Version 2.0.1 • Premium Theme</p>
+        </footer>
       </main>
+
+      {/* Custom CSS */}
+      <style jsx global>{`
+        /* Custom Scrollbar */
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(182, 137, 56, 0.3) transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(182, 137, 56, 0.3);
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(182, 137, 56, 0.5);
+        }
+        
+        /* Selection */
+        ::selection {
+          background: rgba(182, 137, 56, 0.3);
+          color: white;
+        }
+        
+        /* Smooth transitions */
+        * {
+          transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        
+        /* Focus styles */
+        :focus-visible {
+          outline: 2px solid #b68938;
+          outline-offset: 2px;
+        }
+        
+        /* Glass effect enhancement */
+        .glass-card {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .glass-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent
+          );
+          transition: left 0.5s;
+        }
+        
+        .glass-card:hover::before {
+          left: 100%;
+        }
+      `}</style>
     </div>
   );
-}
+};
+
+export default App;

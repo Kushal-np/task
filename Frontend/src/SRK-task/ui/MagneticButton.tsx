@@ -1,11 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { motion, type MotionProps  } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface MagneticButtonProps extends Omit<MotionProps, 'children'> {
+interface MagneticButtonProps extends HTMLMotionProps<"button"> {
   variant?: 'primary' | 'secondary';
   children: React.ReactNode;
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  className?: string;
 }
 
 export const MagneticButton: React.FC<MagneticButtonProps> = ({ 
@@ -32,6 +30,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
 
   const baseStyles = "relative group px-10 py-5 rounded-2xl font-bold text-lg overflow-hidden transition-all duration-300";
   
+  // Explicit gradient from instruction
   const primaryStyle = {
     background: 'linear-gradient(135deg, rgba(225, 186, 115, 0.9), rgba(182, 137, 56, 0.9))',
     boxShadow: '0 20px 60px rgba(182, 137, 56, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
