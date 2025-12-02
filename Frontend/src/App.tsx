@@ -5,7 +5,7 @@ import Dashboard from "./srktaskpremium/Dashboard/Dashboard";
 import GrowOnlyAdminDashboard from "./growonly/GrowOnlyAdminDashboard";
 import TaskLandingPage from "./srktaskpremium/Task";
 import GrowDashboard from "./srktaskpremium/Dashboard/GrowDashboard";
-import AfterVerified from "./srktaskpremium/afterVerification";
+import AfterVerified from "./srktaskpremium/afterVerification/index";
 const App: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-black text-white">

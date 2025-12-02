@@ -947,161 +947,818 @@ const SRKPortal: React.FC = () => {
   );
 
   // --- VERIFICATION MODAL ---
-  const VerificationModal = () => {
-    const [name, setName] = useState('');
-    const [document, setDocument] = useState<File | null>(null);
-    const [documentPreview, setDocumentPreview] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+const VerificationModal = () => {
+  const [name, setName] = useState('');
+  const [document, setDocument] = useState<File | null>(null);
+  const [documentPreview, setDocumentPreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState<'info' | 'selfie' | 'signature' | 'review'>('info');
+  const [selfieImage, setSelfieImage] = useState<string | null>(null);
+  const [signatureImage, setSignatureImage] = useState<string | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Add ref for file input
 
-    const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        setDocument(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setDocumentPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
+  // Helper function for notifications
+  const addNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    console.log(`${type}: ${message}`);
+    // Use your actual notification system here
+    alert(`${type.toUpperCase()}: ${message}`);
+  };
+
+  // Document upload handler - FIXED
+// FIXED: Document upload handler
+const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  console.log('File selected:', file); // Debug log
+  
+  if (file) {
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    
+    // Check if file type is valid
+    const isValidType = validTypes.includes(file.type) || 
+                       (fileExtension && ['jpg', 'jpeg', 'png', 'pdf'].includes(fileExtension));
+    
+    if (!isValidType) {
+      addNotification('Invalid file type. Please upload JPG, PNG, or PDF files only.', 'error');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-    };
+      return;
+    }
 
-    const handleSubmit = () => {
-      if (!name.trim() || !document) {
-        addNotification('Please fill all fields and upload document', 'error');
-        return;
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      addNotification('File size too large. Maximum size is 5MB.', 'error');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
+      return;
+    }
 
-      setIsSubmitting(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setIsApproved(true);
-        setShowVerification(false);
-        setIdentityVerificationStep('start');
-        addNotification('Identity verification submitted successfully!', 'success');
-        // Update profile status
-        setProfile(prev => ({ ...prev, documentStatus: 'verified' }));
-      }, 2000);
-    };
+    console.log('Setting document state...'); // Debug log
+    setDocument(file);
+    
+    // Create preview for images (not for PDF)
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        console.log('Preview loaded:', reader.result?.toString().substring(0, 50)); // Debug
+        setDocumentPreview(reader.result as string);
+      };
+      reader.onerror = () => {
+        console.error('FileReader error');
+        setDocumentPreview(null);
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type === 'application/pdf') {
+      // For PDF, use a placeholder or extract first page thumbnail
+      setDocumentPreview('/api/placeholder/document-pdf.png'); // You can use a placeholder image
+      // Or create a PDF thumbnail using pdf.js if needed
+    }
+    
+    addNotification(`Document "${file.name}" uploaded successfully`, 'success');
+    
+    // Enable Continue button by triggering a re-render
+    setTimeout(() => {
+      console.log('Current state:', { name, document: file }); // Debug
+    }, 100);
+  } else {
+    console.log('No file selected'); // Debug
+  }
+};
 
-    const handleMockApprove = () => {
+  // Trigger file input click - FIXED
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Remove document - FIXED
+  const removeDocument = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDocument(null);
+    setDocumentPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Initialize canvas for signature
+  useEffect(() => {
+    if (signatureCanvasRef.current && step === 'signature') {
+      const canvas = signatureCanvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+      }
+    }
+  }, [step]);
+
+  // Start camera
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' }
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        setIsCameraActive(true);
+      }
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+      addNotification('Unable to access camera. Please check permissions.', 'error');
+    }
+  };
+
+  // Stop camera
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+      setIsCameraActive(false);
+    }
+  };
+
+  // Capture selfie
+  const captureSelfie = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Draw video frame to canvas
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
+      
+      // Convert to data URL
+      const dataUrl = canvas.toDataURL('image/png');
+      setSelfieImage(dataUrl);
+      stopCamera();
+      addNotification('Selfie captured successfully', 'success');
+    }
+  };
+
+  // Signature drawing
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    setIsDrawing(true);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !signatureCanvasRef.current) return;
+    
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx && canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  };
+
+  const saveSignature = () => {
+    if (signatureCanvasRef.current) {
+      const dataUrl = signatureCanvasRef.current.toDataURL('image/png');
+      setSignatureImage(dataUrl);
+      setStep('review');
+      addNotification('Signature saved successfully', 'success');
+    }
+  };
+
+  // Validate current step
+  const validateStep = () => {
+    switch (step) {
+      case 'info':
+        if (!name.trim()) {
+          addNotification('Please enter your full name', 'error');
+          return false;
+        }
+        if (!document) {
+          addNotification('Please upload your ID document', 'error');
+          return false;
+        }
+        return true;
+      case 'selfie':
+        if (!selfieImage) {
+          addNotification('Please capture a selfie', 'error');
+          return false;
+        }
+        return true;
+      case 'signature':
+        if (!signatureImage) {
+          // Check if canvas has any drawing
+          const canvas = signatureCanvasRef.current;
+          if (canvas) {
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const hasDrawing = imageData.data.some(channel => channel !== 0);
+              if (!hasDrawing) {
+                addNotification('Please draw your signature', 'error');
+                return false;
+              }
+            }
+          }
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  // Go to next step
+  const goToNextStep = () => {
+    if (!validateStep()) return;
+
+    switch (step) {
+      case 'info':
+        setStep('selfie');
+        break;
+      case 'selfie':
+        setStep('signature');
+        break;
+      case 'signature':
+        saveSignature();
+        break;
+    }
+  };
+
+  // Go to previous step
+  const goToPrevStep = () => {
+    switch (step) {
+      case 'selfie':
+        setStep('info');
+        stopCamera();
+        break;
+      case 'signature':
+        setStep('selfie');
+        break;
+      case 'review':
+        setStep('signature');
+        break;
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!name.trim() || !document || !selfieImage || !signatureImage) {
+      addNotification('Please complete all verification steps', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsSubmitting(false);
       setIsApproved(true);
       setShowVerification(false);
+      setStep('info');
+      addNotification('Identity verification submitted successfully!', 'success');
       setProfile(prev => ({ ...prev, documentStatus: 'verified' }));
-      addNotification('Identity verified successfully! All features unlocked.', 'success');
+      
+      // Reset form
+      setName('');
+      setDocument(null);
+      setDocumentPreview(null);
+      setSelfieImage(null);
+      setSignatureImage(null);
+      stopCamera();
+    }, 2000);
+  };
+
+  const handleMockApprove = () => {
+    setIsApproved(true);
+    setShowVerification(false);
+    setStep('info');
+    setProfile(prev => ({ ...prev, documentStatus: 'verified' }));
+    addNotification('Identity verified successfully! All features unlocked.', 'success');
+    
+    // Reset form
+    setName('');
+    setDocument(null);
+    setDocumentPreview(null);
+    setSelfieImage(null);
+    setSignatureImage(null);
+    stopCamera();
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
     };
+  }, []);
 
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm">
-        <GlassCard className="w-full max-w-2xl p-8 relative">
-          <button 
-            onClick={() => setShowVerification(false)} 
-            className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-lg transition-colors"
+  // Get step completion status
+  const getStepStatus = (stepName: string) => {
+    const stepIndex = ['info', 'selfie', 'signature', 'review'].indexOf(stepName);
+    const currentStepIndex = ['info', 'selfie', 'signature', 'review'].indexOf(step);
+    
+    if (stepIndex < currentStepIndex) return 'completed';
+    if (stepIndex === currentStepIndex) return 'current';
+    return 'pending';
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+      <GlassCard className="w-full max-w-2xl p-6 md:p-8 relative max-h-[90vh] overflow-y-auto">
+        <button 
+          onClick={() => {
+            stopCamera();
+            setShowVerification(false);
+          }} 
+          className="absolute top-4 right-4 md:top-6 md:right-6 p-2 hover:bg-white/10 rounded-lg transition-colors z-50"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="text-center mb-6">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center"
           >
-            <X size={20} />
-          </button>
+            <ShieldCheck size={32} className="text-amber-400" />
+          </motion.div>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Identity Verification</h2>
+          <p className="text-zinc-400 text-sm md:text-base">Complete verification to unlock all earning features</p>
+        </div>
 
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center"
-            >
-              <ShieldCheck size={40} className="text-amber-400" />
-            </motion.div>
-            <h2 className="text-3xl font-bold text-white mb-2">Identity Verification</h2>
-            <p className="text-zinc-400">Verify your identity to unlock all earning features</p>
-          </div>
-
-          {identityVerificationStep === 'start' ? (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Full Legal Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your full name as per ID"
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition-all"
-                />
+        {/* Progress Steps */}
+        <div className="flex justify-between items-center mb-6">
+          {['info', 'selfie', 'signature', 'review'].map((s, index) => {
+            const status = getStepStatus(s);
+            return (
+              <div key={s} className="flex flex-col items-center relative" style={{ width: '24%' }}>
+                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mb-2 z-10 transition-all ${
+                  status === 'completed' ? 'bg-amber-500 text-white' : 
+                  status === 'current' ? 'bg-amber-500/30 text-amber-400 border-2 border-amber-500' : 
+                  'bg-white/10 text-zinc-400'
+                }`}>
+                  {status === 'completed' ? <Check size={16} className="md:w-5 md:h-5" /> : index + 1}
+                </div>
+                <span className="text-xs text-zinc-400 capitalize hidden md:block">{s}</span>
+                <span className="text-xs text-zinc-400 capitalize md:hidden">
+                  {s === 'info' ? 'Info' : s === 'selfie' ? 'Selfie' : s === 'signature' ? 'Sign' : 'Review'}
+                </span>
+                {index < 3 && (
+                  <div className={`absolute h-0.5 w-full left-1/2 top-4 -translate-y-1/2 ${
+                    status === 'completed' ? 'bg-amber-500' : 'bg-white/10'
+                  }`} />
+                )}
               </div>
+            );
+          })}
+        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Government ID Document</label>
-                <div 
-                  className={`border-2 border-dashed ${documentPreview ? 'border-amber-500/50' : 'border-white/10'} rounded-xl p-8 text-center hover:border-amber-500/30 transition-colors cursor-pointer`}
-                  onClick={() => document.getElementById('document-upload')?.click()}
-                >
-                  <input
-                    type="file"
-                    id="document-upload"
-                    onChange={handleDocumentUpload}
-                    className="hidden"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                  />
-                  {documentPreview ? (
-                    <div className="space-y-4">
+        {/* Step 1: Personal Info */}
+        {step === 'info' && (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">Full Legal Name *</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your full name as per ID"
+                className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">Government ID Document *</label>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                id="document-upload"
+                onChange={handleDocumentUpload}
+                className="hidden"
+                accept=".jpg,.jpeg,.png,.pdf"
+              />
+              
+              {/* Upload area */}
+              <div 
+                onClick={triggerFileInput}
+                className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-amber-500/30 transition-colors cursor-pointer min-h-[200px] flex flex-col items-center justify-center ${
+                  documentPreview ? 'border-amber-500/50 bg-amber-500/5' : 'border-white/10 hover:bg-white/5'
+                }`}
+              >
+                {documentPreview ? (
+                  <div className="space-y-4 w-full">
+                    <div className="relative">
                       <img 
                         src={documentPreview} 
                         alt="Document preview" 
-                        className="max-h-48 mx-auto rounded-lg object-contain"
+                        className="max-h-40 mx-auto rounded-lg object-contain"
                       />
-                      <p className="text-sm text-amber-400">Document uploaded: {document?.name}</p>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDocument(null);
-                          setDocumentPreview(null);
-                        }}
-                        className="text-sm text-red-400 hover:text-red-300"
-                      >
-                        Remove
-                      </button>
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            triggerFileInput();
+                          }}
+                          className="p-2 bg-black/70 rounded-lg hover:bg-black/90 transition-colors"
+                          title="Change document"
+                        >
+                          <RefreshCw size={16} />
+                        </button>
+                        <button 
+                          onClick={removeDocument}
+                          className="p-2 bg-red-500/70 rounded-lg hover:bg-red-500/90 transition-colors"
+                          title="Remove document"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <Upload size={40} className="mx-auto mb-4 text-zinc-400" />
-                      <p className="text-zinc-400 mb-2">Click to upload ID (Aadhar, Passport, etc.)</p>
-                      <p className="text-xs text-zinc-500">Max file size: 5MB • JPG, PNG, PDF</p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-4 space-y-4">
-                <MagneticButton 
-                  onClick={handleSubmit}
-                  disabled={!name.trim() || !document || isSubmitting}
-                  className="w-full"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <RefreshCw size={16} className="animate-spin" />
-                      Submitting...
-                    </span>
-                  ) : (
-                    'Submit for Verification'
-                  )}
-                </MagneticButton>
-
-                <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
-                  <p className="text-sm text-amber-400 mb-2 flex items-center gap-2">
-                    <Zap size={16} /> For testing purposes only:
-                  </p>
-                  <button
-                    onClick={handleMockApprove}
-                    className="text-sm text-white hover:text-amber-300 underline flex items-center gap-1"
-                  >
-                    <Sparkles size={14} /> Click here to mock approve and see all options
-                  </button>
-                </div>
+                    <div className="text-center">
+                      <p className="text-sm text-amber-400 truncate">{document?.name}</p>
+                      <p className="text-xs text-zinc-500">
+                        {(document?.size ? document.size / 1024 : 0).toFixed(1)} KB • {
+                          document?.type === 'application/pdf' ? 'PDF' : 'Image'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Upload size={48} className="mx-auto mb-4 text-zinc-400" />
+                    <p className="text-zinc-400 mb-2 font-medium">Click to upload ID document</p>
+                    <p className="text-xs text-zinc-500">Supported: JPG, PNG, PDF • Max 5MB</p>
+                  </>
+                )}
               </div>
             </div>
-          ) : null}
-        </GlassCard>
-      </div>
-    );
-  };
+
+            <button 
+              onClick={goToNextStep}
+              disabled={!name.trim() || !document}
+              className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                !name.trim() || !document
+                  ? 'bg-white/10 text-zinc-400 cursor-not-allowed'
+                  : 'bg-amber-500 hover:bg-amber-600 text-white'
+              }`}
+            >
+              Continue to Selfie Verification
+              <ArrowRight size={20} />
+            </button>
+          </div>
+        )}
+
+        {/* Step 2: Selfie Capture */}
+        {step === 'selfie' && (
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-bold text-white mb-2">Live Selfie Verification</h3>
+              <p className="text-zinc-400">Take a clear selfie for face verification</p>
+            </div>
+
+            <div className="relative bg-black/50 rounded-2xl overflow-hidden border border-white/10 aspect-video">
+              {!selfieImage && !isCameraActive ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-4">
+                  <div className="text-center">
+                    <Camera size={48} className="mx-auto mb-4 text-zinc-400" />
+                    <p className="text-zinc-400 mb-2">Start camera to take selfie</p>
+                  </div>
+                  <button
+                    onClick={startCamera}
+                    className="px-6 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-bold flex items-center gap-2 transition-all"
+                  >
+                    <Camera size={20} />
+                    Start Camera
+                  </button>
+                </div>
+              ) : null}
+
+              {isCameraActive && (
+                <>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                    onLoadedMetadata={() => {
+                      if (videoRef.current) {
+                        videoRef.current.play();
+                      }
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-48 h-48 md:w-64 md:h-64 border-2 border-amber-400/50 rounded-xl" />
+                  </div>
+                </>
+              )}
+
+              {selfieImage && !isCameraActive && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <img 
+                    src={selfieImage} 
+                    alt="Selfie preview" 
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                  />
+                  <button
+                    onClick={() => {
+                      setSelfieImage(null);
+                      startCamera();
+                    }}
+                    className="absolute top-4 right-4 p-2 bg-black/70 rounded-lg hover:bg-black/90 transition-colors"
+                  >
+                    <RefreshCw size={20} />
+                  </button>
+                </div>
+              )}
+
+              {/* Hidden canvas for capturing */}
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={goToPrevStep}
+                className="py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+              >
+                <ArrowLeft size={18} />
+                Back
+              </button>
+              
+              {isCameraActive ? (
+                <button
+                  onClick={captureSelfie}
+                  className="py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+                >
+                  <Camera size={20} />
+                  Capture Selfie
+                </button>
+              ) : selfieImage ? (
+                <button
+                  onClick={goToNextStep}
+                  className="py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+                >
+                  Continue to Signature
+                  <ArrowRight size={18} />
+                </button>
+              ) : (
+                <button
+                  onClick={startCamera}
+                  className="py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+                >
+                  Start Camera
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Signature */}
+        {step === 'signature' && (
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-bold text-white mb-2">Digital Signature</h3>
+              <p className="text-zinc-400">Draw your signature in the box below</p>
+            </div>
+
+            <div className="relative bg-black/50 rounded-2xl overflow-hidden border border-white/10 h-64">
+              <canvas
+                ref={signatureCanvasRef}
+                width={800}
+                height={400}
+                className="w-full h-full bg-black/20 cursor-crosshair touch-none"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  const touch = e.touches[0];
+                  const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                  });
+                  startDrawing(mouseEvent as any);
+                }}
+                onTouchMove={(e) => {
+                  e.preventDefault();
+                  const touch = e.touches[0];
+                  const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                  });
+                  draw(mouseEvent as any);
+                }}
+                onTouchEnd={stopDrawing}
+              />
+              
+              {!signatureImage && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <p className="text-zinc-500 text-center p-4">Draw your signature here...</p>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <button
+                onClick={clearSignature}
+                className="py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+              >
+                <Trash2 size={18} />
+                Clear
+              </button>
+              <button
+                onClick={goToPrevStep}
+                className="py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+              >
+                <ArrowLeft size={18} />
+                Back
+              </button>
+              <button
+                onClick={goToNextStep}
+                className="py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+              >
+                Save & Continue
+                <ArrowRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Review */}
+        {step === 'review' && (
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-bold text-white mb-2">Review & Submit</h3>
+              <p className="text-zinc-400">Verify all information before submission</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-4 bg-white/5 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-zinc-400 text-sm">Full Name</p>
+                  <button 
+                    onClick={() => setStep('info')}
+                    className="text-xs text-amber-400 hover:text-amber-300"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <p className="text-white font-medium">{name}</p>
+              </div>
+
+              <div className="p-4 bg-white/5 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-zinc-400 text-sm">ID Document</p>
+                  <button 
+                    onClick={() => setStep('info')}
+                    className="text-xs text-amber-400 hover:text-amber-300"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  {documentPreview && (
+                    <img 
+                      src={documentPreview} 
+                      alt="Document" 
+                      className="w-16 h-16 object-cover rounded-lg"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-medium truncate">{document?.name}</p>
+                    <p className="text-zinc-500 text-sm">
+                      {(document?.size ? document.size / 1024 : 0).toFixed(1)} KB • {
+                        document?.type === 'application/pdf' ? 'PDF' : 'Image'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-white/5 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-zinc-400 text-sm">Selfie Verification</p>
+                  <button 
+                    onClick={() => setStep('selfie')}
+                    className="text-xs text-amber-400 hover:text-amber-300"
+                  >
+                    Edit
+                  </button>
+                </div>
+                {selfieImage && (
+                  <img 
+                    src={selfieImage} 
+                    alt="Selfie" 
+                    className="w-32 h-32 object-cover rounded-lg mx-auto"
+                  />
+                )}
+              </div>
+
+              <div className="p-4 bg-white/5 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-zinc-400 text-sm">Digital Signature</p>
+                  <button 
+                    onClick={() => setStep('signature')}
+                    className="text-xs text-amber-400 hover:text-amber-300"
+                  >
+                    Edit
+                  </button>
+                </div>
+                {signatureImage && (
+                  <div className="flex items-center justify-center">
+                    <div className="bg-white p-2 rounded-lg">
+                      <img 
+                        src={signatureImage} 
+                        alt="Signature" 
+                        className="h-12 object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={goToPrevStep}
+                className="py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+              >
+                <ArrowLeft size={18} />
+                Back
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className={`py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                  isSubmitting
+                    ? 'bg-amber-500/50 cursor-not-allowed'
+                    : 'bg-amber-500 hover:bg-amber-600'
+                }`}
+              >
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw size={18} className="animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit Verification
+                    <Check size={18} />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mock Approve Button */}
+        <div className="mt-6 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+          <p className="text-sm text-amber-400 mb-2 flex items-center gap-2">
+            <Zap size={16} /> For testing purposes only:
+          </p>
+          <button
+            onClick={handleMockApprove}
+            className="text-sm text-white hover:text-amber-300 underline flex items-center gap-1"
+          >
+            <Sparkles size={14} /> Click here to mock approve and see all options
+          </button>
+        </div>
+      </GlassCard>
+    </div>
+  );
+};
 
   // --- SIDEBAR COMPONENT ---
   const Sidebar = () => {
