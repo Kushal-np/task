@@ -12,8 +12,19 @@ import {
   Trophy, Lock, CameraIcon, UserCheck, UsersIcon, Video, 
   MessageCircle, Hash, Music, Film, Mic, EyeOff, CheckSquare,
   AlertCircle, Info, PieChart, Cpu, Database, Cloud,
-  ZapOff, GiftIcon, Tag, CreditCardIcon, ShoppingBag, WalletIcon
+  ZapOff, GiftIcon, Tag, CreditCardIcon, ShoppingBag, WalletIcon,
+  PenTool,
+  ArrowLeft,
+  Loader2,
+  ChevronLeft,
+  Minus,
+  RotateCcw,
+  Trash2,
+  Type
 } from 'lucide-react';
+
+
+
 
 // --- TYPE DEFINITIONS ---
 type SocialPlatform = 'youtube' | 'instagram' | 'tiktok' | 'facebook' | 'twitter';
@@ -947,195 +958,417 @@ const SRKPortal: React.FC = () => {
   );
 
   // --- VERIFICATION MODAL ---
-const VerificationModal = () => {
-  const [name, setName] = useState('');
-  const [document, setDocument] = useState<File | null>(null);
-  const [documentPreview, setDocumentPreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState<'info' | 'selfie' | 'signature' | 'review'>('info');
-  const [selfieImage, setSelfieImage] = useState<string | null>(null);
-  const [signatureImage, setSignatureImage] = useState<string | null>(null);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null); // Add ref for file input
 
-  // Helper function for notifications
-  const addNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    console.log(`${type}: ${message}`);
-    // Use your actual notification system here
-    alert(`${type.toUpperCase()}: ${message}`);
+
+interface VerificationModalProps {
+  setShowVerification: (show: boolean) => void;
+  setIsApproved: (approved: boolean) => void;
+  setProfile: (profile: any) => void;
+}
+const VideoFeature = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [showControls, setShowControls] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const updateProgress = () => {
+      if (video.duration) {
+        setProgress((video.currentTime / video.duration) * 100);
+      }
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => setIsPlaying(false);
+
+    video.addEventListener('timeupdate', updateProgress);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleEnded);
+
+    return () => {
+      video.removeEventListener('timeupdate', updateProgress);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const togglePlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isPlaying) {
+      video.pause();
+    } else {
+      video.play();
+    }
+    setIsPlaying(!isPlaying);
   };
 
-  // Document upload handler - FIXED
-// FIXED: Document upload handler
-const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  console.log('File selected:', file); // Debug log
-  
-  if (file) {
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    
-    // Check if file type is valid
-    const isValidType = validTypes.includes(file.type) || 
-                       (fileExtension && ['jpg', 'jpeg', 'png', 'pdf'].includes(fileExtension));
-    
-    if (!isValidType) {
-      addNotification('Invalid file type. Please upload JPG, PNG, or PDF files only.', 'error');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = videoRef.current;
+    if (!video) return;
 
-    // Validate file size (5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      addNotification('File size too large. Maximum size is 5MB.', 'error');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
+    const time = (parseFloat(e.target.value) / 100) * video.duration;
+    video.currentTime = time;
+    setProgress(parseFloat(e.target.value));
+  };
 
-    console.log('Setting document state...'); // Debug log
-    setDocument(file);
-    
-    // Create preview for images (not for PDF)
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        console.log('Preview loaded:', reader.result?.toString().substring(0, 50)); // Debug
-        setDocumentPreview(reader.result as string);
-      };
-      reader.onerror = () => {
-        console.error('FileReader error');
-        setDocumentPreview(null);
-      };
-      reader.readAsDataURL(file);
-    } else if (file.type === 'application/pdf') {
-      // For PDF, use a placeholder or extract first page thumbnail
-      setDocumentPreview('/api/placeholder/document-pdf.png'); // You can use a placeholder image
-      // Or create a PDF thumbnail using pdf.js if needed
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const newVolume = parseFloat(e.target.value);
+    video.volume = newVolume;
+    setVolume(newVolume);
+  };
+
+  const toggleFullscreen = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (!document.fullscreenElement) {
+      video.requestFullscreen().then(() => setIsFullscreen(true));
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false));
     }
-    
-    addNotification(`Document "${file.name}" uploaded successfully`, 'success');
-    
-    // Enable Continue button by triggering a re-render
-    setTimeout(() => {
-      console.log('Current state:', { name, document: file }); // Debug
-    }, 100);
-  } else {
-    console.log('No file selected'); // Debug
-  }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  return (
+    <div className="w-full max-w-4xl mx-auto">
+      <GlassCard>
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-red-500/20 to-pink-500/20 flex items-center justify-center">
+              <Video size={24} className="text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Video Feature Demo</h2>
+              <p className="text-zinc-400">Watch and interact with our premium video player</p>
+            </div>
+          </div>
+
+          {/* Video Player Container */}
+          <div className="relative bg-black rounded-xl overflow-hidden group"
+               onMouseEnter={() => setShowControls(true)}
+               onMouseLeave={() => setShowControls(false)}>
+            
+            {/* Video Element */}
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              className="w-full aspect-video object-cover"
+              onClick={togglePlay}
+            />
+
+            {/* Play/Pause Overlay */}
+            {!isPlaying && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer"
+                onClick={togglePlay}
+              >
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center hover:scale-110 transition-transform">
+                  <Play size={32} className="text-white ml-1" />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Video Controls */}
+            <motion.div
+              initial={{ y: 100 }}
+              animate={{ y: showControls ? 0 : 100 }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4"
+            >
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={progress}
+                  onChange={handleSeek}
+                  className="w-full h-1.5 bg-zinc-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                />
+              </div>
+
+              {/* Control Buttons */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={togglePlay}
+                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  >
+                    {isPlaying ? (
+                      <X size={20} className="text-white" />
+                    ) : (
+                      <Play size={20} className="text-white" />
+                    )}
+                  </button>
+
+                  {/* Volume Control */}
+                  <div className="flex items-center gap-2">
+                    <VolumeIcon volume={volume} />
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={volume}
+                      onChange={handleVolumeChange}
+                      className="w-20 h-1 bg-zinc-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                    />
+                  </div>
+
+                  {/* Time Display */}
+                  <span className="text-sm text-zinc-300">
+                    {videoRef.current ? formatTime(videoRef.current.currentTime) : '0:00'} / {videoRef.current ? formatTime(videoRef.current.duration || 0) : '0:00'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Playback Speed */}
+                  <div className="relative group">
+                    <button className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-colors">
+                      {playbackRate}x
+                    </button>
+                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">
+                      <div className="bg-zinc-900 border border-white/10 rounded-lg p-2 min-w-[100px]">
+                        {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                          <button
+                            key={rate}
+                            onClick={() => {
+                              if (videoRef.current) {
+                                videoRef.current.playbackRate = rate;
+                                setPlaybackRate(rate);
+                              }
+                            }}
+                            className={`w-full px-3 py-1 text-sm rounded hover:bg-white/10 ${
+                              playbackRate === rate ? 'text-amber-400' : 'text-zinc-300'
+                            }`}
+                          >
+                            {rate}x
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fullscreen Toggle */}
+                  <button
+                    onClick={toggleFullscreen}
+                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  >
+                    {isFullscreen ? (
+                      <Minus size={20} className="text-white" />
+                    ) : (
+                      <ExternalLink size={20} className="text-white" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Video Stats Overlay */}
+            <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 text-xs text-white">
+                <Activity size={12} />
+                <span>HD • 1080p</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Video Info */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <GlassCard small>
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye size={16} className="text-blue-400" />
+                  <span className="text-sm text-zinc-400">Views</span>
+                </div>
+                <p className="text-xl font-bold text-white">1.2M</p>
+              </div>
+            </GlassCard>
+
+            <GlassCard small>
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <ThumbsUp size={16} className="text-green-400" />
+                  <span className="text-sm text-zinc-400">Likes</span>
+                </div>
+                <p className="text-xl font-bold text-white">45.2K</p>
+              </div>
+            </GlassCard>
+
+            <GlassCard small>
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare size={16} className="text-purple-400" />
+                  <span className="text-sm text-zinc-400">Comments</span>
+                </div>
+                <p className="text-xl font-bold text-white">3.8K</p>
+              </div>
+            </GlassCard>
+          </div>
+
+          {/* Video Description */}
+          <div className="mt-6 p-4 bg-white/5 rounded-xl">
+            <h3 className="text-lg font-bold text-white mb-2">Big Buck Bunny</h3>
+            <p className="text-zinc-300">
+              A large and lovable rabbit fights back against his tormentors by rallying his forest friends.
+              This open movie is brought to you by the Blender Institute.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <span className="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full text-sm">Animation</span>
+              <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-sm">Comedy</span>
+              <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-sm">Family</span>
+              <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm">HD</span>
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+    </div>
+  );
 };
 
-  // Trigger file input click - FIXED
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
+// Helper component for volume icon
+const VolumeIcon = ({ volume }: { volume: number }) => {
+  if (volume === 0) return <VolumeOff size={20} className="text-white" />;
+  if (volume < 0.5) return <VolumeLow size={20} className="text-white" />;
+  return <VolumeHigh size={20} className="text-white" />;
+};
 
-  // Remove document - FIXED
-  const removeDocument = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDocument(null);
-    setDocumentPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+// Add missing volume icons
+const VolumeOff = (props: any) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+    <path d="M23 9L17 15" />
+    <path d="M17 9L23 15" />
+  </svg>
+);
 
-  // Initialize canvas for signature
+const VolumeLow = (props: any) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+  </svg>
+);
+
+const VolumeHigh = (props: any) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+  </svg>
+);
+
+// --- SIGNATURE DRAWING COMPONENT ---
+interface SignaturePadProps {
+  onSave: (signature: string) => void;
+  width?: number;
+  height?: number;
+}
+
+const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, width = 400, height = 200 }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [lineColor, setLineColor] = useState('#FFFFFF');
+  const [lineWidth, setLineWidth] = useState(2);
+  const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
-    if (signatureCanvasRef.current && step === 'signature') {
-      const canvas = signatureCanvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-      }
-    }
-  }, [step]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  // Start camera
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' }
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setIsCameraActive(true);
-      }
-    } catch (err) {
-      console.error('Error accessing camera:', err);
-      addNotification('Unable to access camera. Please check permissions.', 'error');
-    }
-  };
-
-  // Stop camera
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-      setIsCameraActive(false);
-    }
-  };
-
-  // Capture selfie
-  const captureSelfie = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-      const ctx = canvas.getContext('2d');
-      
-      // Set canvas dimensions to match video
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      // Draw video frame to canvas
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      }
-      
-      // Convert to data URL
-      const dataUrl = canvas.toDataURL('image/png');
-      setSelfieImage(dataUrl);
-      stopCamera();
-      addNotification('Selfie captured successfully', 'success');
-    }
-  };
-
-  // Signature drawing
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = signatureCanvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-    setIsDrawing(true);
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !signatureCanvasRef.current) return;
-    
-    const canvas = signatureCanvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Set canvas dimensions
+    canvas.width = width;
+    canvas.height = height;
+
+    // Set background
+    ctx.fillStyle = 'rgba(26, 20, 16, 0.4)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }, [width, height, lineColor, lineWidth]);
+
+  const getCanvasCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
     const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    let clientX: number, clientY: number;
+
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  };
+
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    const { x, y } = getCanvasCoordinates(e);
+    
+    setIsDrawing(true);
+    setLastPosition({ x, y });
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    if (!isDrawing) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    const { x, y } = getCanvasCoordinates(e);
+    
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = lineWidth;
+    
+    ctx.lineTo(x, y);
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    
+    setLastPosition({ x, y });
   };
 
   const stopDrawing = () => {
@@ -1143,622 +1376,970 @@ const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   const clearSignature = () => {
-    const canvas = signatureCanvasRef.current;
+    const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    if (ctx && canvas) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    if (!canvas || !ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(26, 20, 16, 0.4)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   };
 
   const saveSignature = () => {
-    if (signatureCanvasRef.current) {
-      const dataUrl = signatureCanvasRef.current.toDataURL('image/png');
-      setSignatureImage(dataUrl);
-      setStep('review');
-      addNotification('Signature saved successfully', 'success');
-    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const signature = canvas.toDataURL('image/png');
+    onSave(signature);
   };
 
-  // Validate current step
-  const validateStep = () => {
-    switch (step) {
-      case 'info':
-        if (!name.trim()) {
-          addNotification('Please enter your full name', 'error');
-          return false;
-        }
-        if (!document) {
-          addNotification('Please upload your ID document', 'error');
-          return false;
-        }
-        return true;
-      case 'selfie':
-        if (!selfieImage) {
-          addNotification('Please capture a selfie', 'error');
-          return false;
-        }
-        return true;
-      case 'signature':
-        if (!signatureImage) {
-          // Check if canvas has any drawing
-          const canvas = signatureCanvasRef.current;
-          if (canvas) {
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const hasDrawing = imageData.data.some(channel => channel !== 0);
-              if (!hasDrawing) {
-                addNotification('Please draw your signature', 'error');
-                return false;
-              }
-            }
-          }
-        }
-        return true;
-      default:
-        return true;
-    }
-  };
+  const drawLine = (width: number) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
 
-  // Go to next step
-  const goToNextStep = () => {
-    if (!validateStep()) return;
-
-    switch (step) {
-      case 'info':
-        setStep('selfie');
-        break;
-      case 'selfie':
-        setStep('signature');
-        break;
-      case 'signature':
-        saveSignature();
-        break;
-    }
-  };
-
-  // Go to previous step
-  const goToPrevStep = () => {
-    switch (step) {
-      case 'selfie':
-        setStep('info');
-        stopCamera();
-        break;
-      case 'signature':
-        setStep('selfie');
-        break;
-      case 'review':
-        setStep('signature');
-        break;
-    }
-  };
-
-  const handleSubmit = () => {
-    if (!name.trim() || !document || !selfieImage || !signatureImage) {
-      addNotification('Please complete all verification steps', 'error');
-      return;
-    }
-
-    setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsApproved(true);
-      setShowVerification(false);
-      setStep('info');
-      addNotification('Identity verification submitted successfully!', 'success');
-      setProfile(prev => ({ ...prev, documentStatus: 'verified' }));
-      
-      // Reset form
-      setName('');
-      setDocument(null);
-      setDocumentPreview(null);
-      setSelfieImage(null);
-      setSignatureImage(null);
-      stopCamera();
-    }, 2000);
-  };
-
-  const handleMockApprove = () => {
-    setIsApproved(true);
-    setShowVerification(false);
-    setStep('info');
-    setProfile(prev => ({ ...prev, documentStatus: 'verified' }));
-    addNotification('Identity verified successfully! All features unlocked.', 'success');
-    
-    // Reset form
-    setName('');
-    setDocument(null);
-    setDocumentPreview(null);
-    setSelfieImage(null);
-    setSignatureImage(null);
-    stopCamera();
-  };
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
-  // Get step completion status
-  const getStepStatus = (stepName: string) => {
-    const stepIndex = ['info', 'selfie', 'signature', 'review'].indexOf(stepName);
-    const currentStepIndex = ['info', 'selfie', 'signature', 'review'].indexOf(step);
-    
-    if (stepIndex < currentStepIndex) return 'completed';
-    if (stepIndex === currentStepIndex) return 'current';
-    return 'pending';
+    // Draw a sample line to demonstrate the brush size
+    const yPos = height - 20;
+    ctx.beginPath();
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = width;
+    ctx.moveTo(50, yPos);
+    ctx.lineTo(width * 10 + 50, yPos);
+    ctx.stroke();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-      <GlassCard className="w-full max-w-2xl p-6 md:p-8 relative max-h-[90vh] overflow-y-auto">
-        <button 
-          onClick={() => {
-            stopCamera();
-            setShowVerification(false);
-          }} 
-          className="absolute top-4 right-4 md:top-6 md:right-6 p-2 hover:bg-white/10 rounded-lg transition-colors z-50"
-        >
-          <X size={20} />
-        </button>
-
-        <div className="text-center mb-6">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center"
-          >
-            <ShieldCheck size={32} className="text-amber-400" />
-          </motion.div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Identity Verification</h2>
-          <p className="text-zinc-400 text-sm md:text-base">Complete verification to unlock all earning features</p>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex justify-between items-center mb-6">
-          {['info', 'selfie', 'signature', 'review'].map((s, index) => {
-            const status = getStepStatus(s);
-            return (
-              <div key={s} className="flex flex-col items-center relative" style={{ width: '24%' }}>
-                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mb-2 z-10 transition-all ${
-                  status === 'completed' ? 'bg-amber-500 text-white' : 
-                  status === 'current' ? 'bg-amber-500/30 text-amber-400 border-2 border-amber-500' : 
-                  'bg-white/10 text-zinc-400'
-                }`}>
-                  {status === 'completed' ? <Check size={16} className="md:w-5 md:h-5" /> : index + 1}
-                </div>
-                <span className="text-xs text-zinc-400 capitalize hidden md:block">{s}</span>
-                <span className="text-xs text-zinc-400 capitalize md:hidden">
-                  {s === 'info' ? 'Info' : s === 'selfie' ? 'Selfie' : s === 'signature' ? 'Sign' : 'Review'}
-                </span>
-                {index < 3 && (
-                  <div className={`absolute h-0.5 w-full left-1/2 top-4 -translate-y-1/2 ${
-                    status === 'completed' ? 'bg-amber-500' : 'bg-white/10'
-                  }`} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Step 1: Personal Info */}
-        {step === 'info' && (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">Full Legal Name *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name as per ID"
-                className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">Government ID Document *</label>
-              
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                id="document-upload"
-                onChange={handleDocumentUpload}
-                className="hidden"
-                accept=".jpg,.jpeg,.png,.pdf"
-              />
-              
-              {/* Upload area */}
-              <div 
-                onClick={triggerFileInput}
-                className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-amber-500/30 transition-colors cursor-pointer min-h-[200px] flex flex-col items-center justify-center ${
-                  documentPreview ? 'border-amber-500/50 bg-amber-500/5' : 'border-white/10 hover:bg-white/5'
-                }`}
-              >
-                {documentPreview ? (
-                  <div className="space-y-4 w-full">
-                    <div className="relative">
-                      <img 
-                        src={documentPreview} 
-                        alt="Document preview" 
-                        className="max-h-40 mx-auto rounded-lg object-contain"
-                      />
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            triggerFileInput();
-                          }}
-                          className="p-2 bg-black/70 rounded-lg hover:bg-black/90 transition-colors"
-                          title="Change document"
-                        >
-                          <RefreshCw size={16} />
-                        </button>
-                        <button 
-                          onClick={removeDocument}
-                          className="p-2 bg-red-500/70 rounded-lg hover:bg-red-500/90 transition-colors"
-                          title="Remove document"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm text-amber-400 truncate">{document?.name}</p>
-                      <p className="text-xs text-zinc-500">
-                        {(document?.size ? document.size / 1024 : 0).toFixed(1)} KB • {
-                          document?.type === 'application/pdf' ? 'PDF' : 'Image'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Upload size={48} className="mx-auto mb-4 text-zinc-400" />
-                    <p className="text-zinc-400 mb-2 font-medium">Click to upload ID document</p>
-                    <p className="text-xs text-zinc-500">Supported: JPG, PNG, PDF • Max 5MB</p>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <button 
-              onClick={goToNextStep}
-              disabled={!name.trim() || !document}
-              className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                !name.trim() || !document
-                  ? 'bg-white/10 text-zinc-400 cursor-not-allowed'
-                  : 'bg-amber-500 hover:bg-amber-600 text-white'
-              }`}
-            >
-              Continue to Selfie Verification
-              <ArrowRight size={20} />
-            </button>
+    <GlassCard>
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+            <PenTool size={24} className="text-blue-400" />
           </div>
-        )}
+          <div>
+            <h3 className="text-xl font-bold text-white">Digital Signature</h3>
+            <p className="text-zinc-400">Draw your signature in the box below</p>
+          </div>
+        </div>
 
-        {/* Step 2: Selfie Capture */}
-        {step === 'selfie' && (
+        {/* Canvas Container */}
+        <div className="relative mb-6">
+          <canvas
+            ref={canvasRef}
+            className="w-full h-48 rounded-lg border-2 border-white/10 cursor-crosshair touch-none"
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+          />
+          
+          {/* Drawing Guide */}
+          <div className="absolute top-2 left-2 text-xs text-zinc-500 bg-black/60 px-2 py-1 rounded">
+            Draw here
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="space-y-6">
+          {/* Brush Size */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-400 mb-3">
+              Brush Size: {lineWidth}px
+            </label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={lineWidth}
+                onChange={(e) => setLineWidth(parseInt(e.target.value))}
+                className="flex-1 h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+              />
+              <div className="flex gap-2">
+                {[1, 3, 5, 8, 10].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setLineWidth(size)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      lineWidth === size
+                        ? 'bg-amber-500/20 border border-amber-500/30'
+                        : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <div
+                      className="rounded-full bg-white"
+                      style={{ width: size, height: size }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Color Picker */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-400 mb-3">
+              Pen Color
+            </label>
+            <div className="flex gap-3">
+              {[
+                { color: '#FFFFFF', name: 'White' },
+                { color: '#000000', name: 'Black' },
+                { color: '#3B82F6', name: 'Blue' },
+                { color: '#10B981', name: 'Green' },
+                { color: '#8B5CF6', name: 'Purple' },
+                { color: '#EF4444', name: 'Red' },
+                { color: '#F59E0B', name: 'Orange' },
+                { color: '#06B6D4', name: 'Cyan' },
+              ].map(({ color, name }) => (
+                <button
+                  key={color}
+                  onClick={() => setLineColor(color)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-lg ${
+                    lineColor === color
+                      ? 'bg-white/20'
+                      : 'hover:bg-white/10'
+                  }`}
+                  title={name}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full border border-white/20"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="text-xs text-zinc-400">{name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <button
+              onClick={clearSignature}
+              className="flex-1 px-6 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <Trash2 size={18} />
+              Clear
+            </button>
+            
+            <button
+              onClick={() => {
+                clearSignature();
+                // Add sample signature
+                const canvas = canvasRef.current;
+                const ctx = canvas?.getContext('2d');
+                if (!canvas || !ctx) return;
+
+                const name = "John Doe";
+                ctx.font = 'italic 28px Arial';
+                ctx.fillStyle = lineColor;
+                ctx.textAlign = 'center';
+                ctx.fillText(name, canvas.width / 2, canvas.height / 2);
+              }}
+              className="flex-1 px-6 py-3 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <Type size={18} />
+              Sample
+            </button>
+            
+            <MagneticButton
+              onClick={saveSignature}
+              className="flex-1"
+            >
+              <Check size={18} />
+              Save Signature
+            </MagneticButton>
+          </div>
+
+          {/* Instructions */}
+          <div className="p-4 bg-white/5 rounded-xl">
+            <h4 className="font-medium text-white mb-2">Tips for best results:</h4>
+            <ul className="text-sm text-zinc-400 space-y-1">
+              <li className="flex items-center gap-2">
+                <Check size={12} className="text-green-400" />
+                Sign naturally as you would on paper
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={12} className="text-green-400" />
+                Use a stylus or your finger for better control
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={12} className="text-green-400" />
+                Make sure your signature is clear and readable
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={12} className="text-green-400" />
+                Keep it within the drawing area
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </GlassCard>
+  );
+};
+
+// Add the missing GlassCard small prop interface
+interface GlassCardSmallProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const GlassCardSmall: React.FC<GlassCardSmallProps> = ({ children, className = '' }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`relative rounded-xl border border-white/5 bg-gradient-to-br from-white/5 to-white/2 hover:border-white/10 transition-all duration-300 ${className}`}
+      style={{
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+      }}
+    >
+      <div className="relative z-10">
+        {children}
+      </div>
+    </motion.div>
+  );
+};
+
+// --- THEME CONFIGURATION ---
+const THEME = {
+  colors: {
+    bgDeepBlack: '#0a0a0a',
+    bgCard: 'rgba(26, 20, 16, 0.4)',
+    goldAccent: '#b68938',
+    goldLight: '#e1ba73',
+    goldGradient: 'linear-gradient(135deg, #b68938 0%, #e1ba73 100%)',
+    purpleGradient: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+    blueGradient: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
+    greenGradient: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
+    textWhite: '#F3F4F6',
+    textGray: '#9CA3AF',
+    greenSuccess: '#10B981',
+    redAlert: '#EF4444',
+    blueInfo: '#3B82F6',
+    orangeWarn: '#F59E0B',
+    purplePremium: '#8B5CF6',
+    pinkVibrant: '#EC4899',
+    cyanBright: '#06B6D4',
+  },
+  effects: {
+    glass: 'backdrop-blur-xl',
+    shadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    goldGlow: '0 0 20px rgba(182, 137, 56, 0.3)',
+    purpleGlow: '0 0 20px rgba(139, 92, 246, 0.3)',
+    blueGlow: '0 0 20px rgba(59, 130, 246, 0.3)',
+  },
+  animations: {
+    float: 'float 6s ease-in-out infinite',
+    pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+    shimmer: 'shimmer 2s infinite linear',
+  }
+};
+
+// Update the GlassCard component to include small prop
+const GlassCard: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+  hover?: boolean;
+  onClick?: () => void;
+  delay?: number;
+  gradient?: 'gold' | 'purple' | 'blue' | 'green';
+  small?: boolean;
+}> = ({ children, className = '', hover = true, onClick, delay = 0, gradient = 'gold', small = false }) => {
+  const gradientMap = {
+    gold: 'from-[#b68938]/20 via-[#b68938]/10 to-transparent',
+    purple: 'from-[#8B5CF6]/20 via-[#8B5CF6]/10 to-transparent',
+    blue: 'from-[#3B82F6]/20 via-[#3B82F6]/10 to-transparent',
+    green: 'from-[#10B981]/20 via-[#10B981]/10 to-transparent',
+  };
+
+  return (
+    <motion.div
+      onClick={onClick}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: delay * 0.1 }}
+      whileHover={hover ? { scale: small ? 1.02 : 1.02, y: -4, transition: { duration: 0.2 } } : {}}
+      className={`relative ${small ? 'rounded-xl' : 'rounded-2xl'} border border-white/5 bg-gradient-to-br from-white/5 to-white/2 hover:border-white/10 transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      style={{
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+      }}
+    >
+      {/* Gradient overlay */}
+      <div className={`absolute inset-0 ${small ? 'rounded-xl' : 'rounded-2xl'} bg-gradient-to-br ${gradientMap[gradient]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+      
+      {/* Animated border */}
+      <div className={`absolute inset-0 ${small ? 'rounded-xl' : 'rounded-2xl'}`}>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#b68938]/0 to-transparent animate-[shimmer_2s_infinite]" />
+      </div>
+      
+      <div className="relative z-10">
+        {children}
+      </div>
+    </motion.div>
+  );
+};
+
+// --- Update Verification Modal to include SignaturePad ---
+const VerificationModal = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    documentFile: null as File | null,
+    selfieImage: null as string | null,
+    signature: null as string | null,
+    fullName: '',
+    dob: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<'success' | 'error' | null>(null);
+
+  // Camera state
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  const totalSteps = 5;
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+
+  // Camera logic
+  const startCamera = useCallback(async () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
+    setCameraError(null);
+    setIsCameraActive(false);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' },
+        audio: false 
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().then(() => {
+          setIsCameraActive(true);
+          setCameraError(null);
+        }).catch(e => {
+          console.error("Video Autoplay Blocked:", e);
+          setCameraError("Autoplay blocked. Try refreshing or check browser settings.");
+        });
+      }
+    } catch (err: any) {
+      console.error("Camera access failed:", err);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setCameraError("Camera access denied. Please grant permission in your browser settings.");
+      } else if (err.name === "NotFoundError") {
+        setCameraError("No camera found on this device.");
+      } else {
+        setCameraError(`Error: ${err.message}`);
+      }
+    }
+  }, []);
+
+  const stopCamera = useCallback(() => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+    }
+    setIsCameraActive(false);
+  }, []);
+
+  useEffect(() => {
+    if (currentStep === 2 && !formData.selfieImage) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => {
+      if (currentStep === 2) {
+        stopCamera();
+      }
+    };
+  }, [currentStep, startCamera, stopCamera, formData.selfieImage]);
+
+  const takePicture = () => {
+    if (!isCameraActive || !videoRef.current || !canvasRef.current) {
+      setCameraError("Camera not active or stream failed.");
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/png');
+      setFormData(f => ({ ...f, selfieImage: dataUrl }));
+      stopCamera();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData(f => ({ ...f, documentFile: file }));
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(f => ({ ...f, [name]: value }));
+  };
+
+  const handleSignatureSave = (signature: string) => {
+    setFormData(f => ({ ...f, signature }));
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmissionStatus(null);
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    if (Math.random() > 0.1) {
+      setSubmissionStatus('success');
+      setCurrentStep(totalSteps);
+    } else {
+      setSubmissionStatus('error');
+      setCurrentStep(totalSteps);
+    }
+    setIsSubmitting(false);
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
           <div className="space-y-6">
-            <div className="text-center mb-4">
-              <h3 className="text-xl font-bold text-white mb-2">Live Selfie Verification</h3>
-              <p className="text-zinc-400">Take a clear selfie for face verification</p>
-            </div>
-
-            <div className="relative bg-black/50 rounded-2xl overflow-hidden border border-white/10 aspect-video">
-              {!selfieImage && !isCameraActive ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-4">
-                  <div className="text-center">
-                    <Camera size={48} className="mx-auto mb-4 text-zinc-400" />
-                    <p className="text-zinc-400 mb-2">Start camera to take selfie</p>
-                  </div>
-                  <button
-                    onClick={startCamera}
-                    className="px-6 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-bold flex items-center gap-2 transition-all"
-                  >
-                    <Camera size={20} />
-                    Start Camera
-                  </button>
-                </div>
-              ) : null}
-
-              {isCameraActive && (
-                <>
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-cover"
-                    onLoadedMetadata={() => {
-                      if (videoRef.current) {
-                        videoRef.current.play();
-                      }
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-48 h-48 md:w-64 md:h-64 border-2 border-amber-400/50 rounded-xl" />
-                  </div>
-                </>
-              )}
-
-              {selfieImage && !isCameraActive && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <img 
-                    src={selfieImage} 
-                    alt="Selfie preview" 
-                    className="max-w-full max-h-full object-contain rounded-lg"
-                  />
-                  <button
-                    onClick={() => {
-                      setSelfieImage(null);
-                      startCamera();
-                    }}
-                    className="absolute top-4 right-4 p-2 bg-black/70 rounded-lg hover:bg-black/90 transition-colors"
-                  >
-                    <RefreshCw size={20} />
-                  </button>
-                </div>
-              )}
-
-              {/* Hidden canvas for capturing */}
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={goToPrevStep}
-                className="py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+            <h2 className="text-xl font-semibold text-white">1. Upload Document</h2>
+            <p className="text-gray-400">Please upload a valid government-issued ID (e.g., Passport, Driver's License).</p>
+            
+            <div className="border-2 border-dashed border-indigo-500 rounded-lg p-8 text-center bg-gray-700/50">
+              <Upload className="w-8 h-8 mx-auto text-indigo-400 mb-3" />
+              <input 
+                type="file" 
+                id="documentUpload"
+                accept=".pdf,image/jpeg,image/png"
+                onChange={handleFileChange} 
+                className="hidden"
+              />
+              <label 
+                htmlFor="documentUpload"
+                className="cursor-pointer text-indigo-400 hover:text-indigo-300 font-medium transition"
               >
-                <ArrowLeft size={18} />
-                Back
+                {formData.documentFile ? formData.documentFile.name : 'Click to select file'}
+              </label>
+              <p className="text-xs text-gray-500 mt-1">PDF or image files up to 5MB.</p>
+            </div>
+
+            <div className="pt-4 flex justify-end">
+              <button 
+                onClick={nextStep} 
+                disabled={!formData.documentFile}
+                className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-800 disabled:text-gray-500 flex items-center"
+              >
+                Next: Selfie <ChevronRight className="w-4 h-4 ml-2" />
+              </button>
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-white">2. Selfie Capture</h2>
+            <p className="text-gray-400">Please position your face clearly within the frame for a live photo.</p>
+            
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-inner">
+              <video 
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className={`w-full h-full object-cover transition-opacity duration-500 ${isCameraActive ? 'opacity-100' : 'opacity-10'}`}
+              />
+              <canvas ref={canvasRef} className="hidden" />
+
+              {!isCameraActive && !formData.selfieImage && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 p-4 text-center">
+                  {cameraError ? (
+                    <>
+                      <AlertTriangle className="w-8 h-8 text-red-400 mb-2" />
+                      <p className="text-red-400 font-medium mb-4">{cameraError}</p>
+                    </>
+                  ) : (
+                    <>
+                      <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-2" />
+                      <p className="text-white font-medium mb-4">Initializing camera...</p>
+                    </>
+                  )}
+                  <button 
+                    onClick={startCamera}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg flex items-center transition"
+                  >
+                    <Camera className="w-5 h-5 mr-2" /> Start Camera
+                  </button>
+                </div>
+              )}
+
+              {formData.selfieImage && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90">
+                  <img src={formData.selfieImage} alt="Selfie Preview" className="max-h-full max-w-full object-contain rounded-xl shadow-xl border-4 border-indigo-500"/>
+                  <button 
+                    onClick={() => { setFormData(f => ({ ...f, selfieImage: null })); startCamera(); }}
+                    className="absolute top-2 right-2 p-2 bg-red-600 rounded-full text-white hover:bg-red-700 transition"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-between items-center pt-4">
+              <button 
+                onClick={prevStep} 
+                className="text-gray-400 hover:text-white transition px-4 py-2 flex items-center"
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" /> Back
               </button>
               
-              {isCameraActive ? (
-                <button
-                  onClick={captureSelfie}
-                  className="py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+              {!formData.selfieImage ? (
+                <button 
+                  onClick={takePicture} 
+                  disabled={!isCameraActive}
+                  className="p-3 bg-red-500 rounded-full hover:bg-red-600 disabled:bg-gray-600 transition shadow-lg"
                 >
-                  <Camera size={20} />
-                  Capture Selfie
-                </button>
-              ) : selfieImage ? (
-                <button
-                  onClick={goToNextStep}
-                  className="py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
-                >
-                  Continue to Signature
-                  <ArrowRight size={18} />
+                  <Camera className="w-6 h-6 text-white" />
                 </button>
               ) : (
-                <button
-                  onClick={startCamera}
-                  className="py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+                <button 
+                  onClick={nextStep} 
+                  className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition flex items-center"
                 >
-                  Start Camera
+                  Next: Signature <ChevronRight className="w-4 h-4 ml-2" />
                 </button>
               )}
             </div>
           </div>
-        )}
-
-        {/* Step 3: Signature */}
-        {step === 'signature' && (
+        );
+      case 3:
+        return (
           <div className="space-y-6">
-            <div className="text-center mb-4">
-              <h3 className="text-xl font-bold text-white mb-2">Digital Signature</h3>
-              <p className="text-zinc-400">Draw your signature in the box below</p>
+            <h2 className="text-xl font-semibold text-white">3. Digital Signature</h2>
+            <p className="text-gray-400">Draw your signature in the box below</p>
+            
+            <SignaturePad onSave={handleSignatureSave} />
+            
+            <div className="flex justify-between pt-4">
+              <button 
+                onClick={prevStep} 
+                className="text-gray-400 hover:text-white transition px-4 py-2 flex items-center"
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" /> Back
+              </button>
+              <button 
+                onClick={nextStep} 
+                disabled={!formData.signature}
+                className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-800 disabled:text-gray-500 flex items-center"
+              >
+                Next: Details <ChevronRight className="w-4 h-4 ml-2" />
+              </button>
             </div>
-
-            <div className="relative bg-black/50 rounded-2xl overflow-hidden border border-white/10 h-64">
-              <canvas
-                ref={signatureCanvasRef}
-                width={800}
-                height={400}
-                className="w-full h-full bg-black/20 cursor-crosshair touch-none"
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  const touch = e.touches[0];
-                  const mouseEvent = new MouseEvent('mousedown', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                  });
-                  startDrawing(mouseEvent as any);
-                }}
-                onTouchMove={(e) => {
-                  e.preventDefault();
-                  const touch = e.touches[0];
-                  const mouseEvent = new MouseEvent('mousemove', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                  });
-                  draw(mouseEvent as any);
-                }}
-                onTouchEnd={stopDrawing}
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-white">4. Personal Details</h2>
+            <div className="space-y-4">
+              <input 
+                type="text"
+                name="fullName"
+                placeholder="Full Name (as per ID)"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <input 
+                type="date"
+                name="dob"
+                placeholder="Date of Birth"
+                value={formData.dob}
+                onChange={handleInputChange}
+                className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
               />
               
-              {!signatureImage && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <p className="text-zinc-500 text-center p-4">Draw your signature here...</p>
+              {/* Signature Preview */}
+              {formData.signature && (
+                <div>
+                  <p className="text-gray-400 mb-2">Signature Preview:</p>
+                  <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
+                    <img 
+                      src={formData.signature} 
+                      alt="Signature Preview" 
+                      className="h-20 mx-auto object-contain"
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <button
-                onClick={clearSignature}
-                className="py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+            <div className="flex justify-between pt-4">
+              <button 
+                onClick={prevStep} 
+                className="text-gray-400 hover:text-white transition px-4 py-2 flex items-center"
               >
-                <Trash2 size={18} />
-                Clear
+                <ChevronLeft className="w-4 h-4 mr-2" /> Back
               </button>
-              <button
-                onClick={goToPrevStep}
-                className="py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+              <button 
+                onClick={nextStep} 
+                disabled={!formData.fullName || !formData.dob || !formData.signature}
+                className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-800 disabled:text-gray-500 flex items-center"
               >
-                <ArrowLeft size={18} />
-                Back
-              </button>
-              <button
-                onClick={goToNextStep}
-                className="py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
-              >
-                Save & Continue
-                <ArrowRight size={18} />
+                Next: Review <ChevronRight className="w-4 h-4 ml-2" />
               </button>
             </div>
           </div>
-        )}
-
-        {/* Step 4: Review */}
-        {step === 'review' && (
+        );
+      case 5:
+        return (
           <div className="space-y-6">
-            <div className="text-center mb-4">
-              <h3 className="text-xl font-bold text-white mb-2">Review & Submit</h3>
-              <p className="text-zinc-400">Verify all information before submission</p>
+            <h2 className="text-xl font-semibold text-white">5. Review and Submit</h2>
+            <div className="space-y-3 p-4 bg-gray-700 rounded-lg">
+              <div className="text-sm">
+                <span className="font-semibold text-gray-400">Document:</span> <span className="text-white">{formData.documentFile?.name || 'Missing'}</span>
+              </div>
+              <div className="text-sm">
+                <span className="font-semibold text-gray-400">Selfie:</span> 
+                <span className="text-white ml-2">{formData.selfieImage ? 'Captured' : 'Missing'}</span>
+                {formData.selfieImage && (
+                  <img src={formData.selfieImage} alt="Selfie" className="w-16 h-auto mt-2 rounded-md border border-indigo-500" />
+                )}
+              </div>
+              <div className="text-sm">
+                <span className="font-semibold text-gray-400">Signature:</span> 
+                <span className="text-white ml-2">{formData.signature ? 'Provided' : 'Missing'}</span>
+                {formData.signature && (
+                  <img src={formData.signature} alt="Signature" className="w-32 h-auto mt-2 rounded-md border border-indigo-500" />
+                )}
+              </div>
+              <div className="text-sm">
+                <span className="font-semibold text-gray-400">Name:</span> <span className="text-white">{formData.fullName || 'Missing'}</span>
+              </div>
+              <div className="text-sm">
+                <span className="font-semibold text-gray-400">DOB:</span> <span className="text-white">{formData.dob || 'Missing'}</span>
+              </div>
+              <div className="text-sm text-yellow-400 pt-3 italic">
+                I confirm that all information provided is accurate and true.
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="p-4 bg-white/5 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-zinc-400 text-sm">Full Name</p>
-                  <button 
-                    onClick={() => setStep('info')}
-                    className="text-xs text-amber-400 hover:text-amber-300"
-                  >
-                    Edit
-                  </button>
-                </div>
-                <p className="text-white font-medium">{name}</p>
+            {submissionStatus === 'success' ? (
+              <div className="text-center p-6 bg-green-500/10 border border-green-500/20 rounded-xl">
+                <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">Verification Submitted!</h3>
+                <p className="text-gray-400">Your identity verification is under review. This may take 1-2 business days.</p>
               </div>
-
-              <div className="p-4 bg-white/5 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-zinc-400 text-sm">ID Document</p>
-                  <button 
-                    onClick={() => setStep('info')}
-                    className="text-xs text-amber-400 hover:text-amber-300"
-                  >
-                    Edit
-                  </button>
-                </div>
-                <div className="flex items-center gap-3">
-                  {documentPreview && (
-                    <img 
-                      src={documentPreview} 
-                      alt="Document" 
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
+            ) : submissionStatus === 'error' ? (
+              <div className="text-center p-6 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <AlertTriangle className="w-12 h-12 mx-auto text-red-500 mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">Submission Failed</h3>
+                <p className="text-gray-400">An error occurred. Please check your connection and try again.</p>
+                <button 
+                  onClick={() => setCurrentStep(4)} 
+                  className="mt-4 px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-between pt-4">
+                <button 
+                  onClick={prevStep} 
+                  className="text-gray-400 hover:text-white transition px-4 py-2 flex items-center"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" /> Back
+                </button>
+                <button 
+                  onClick={handleSubmit} 
+                  disabled={isSubmitting || !formData.documentFile || !formData.selfieImage || !formData.signature || !formData.fullName || !formData.dob}
+                  className="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition disabled:bg-gray-600 flex items-center"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>
+                  ) : (
+                    <><Send className="w-4 h-4 mr-2" /> Submit Verification</>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium truncate">{document?.name}</p>
-                    <p className="text-zinc-500 text-sm">
-                      {(document?.size ? document.size / 1024 : 0).toFixed(1)} KB • {
-                        document?.type === 'application/pdf' ? 'PDF' : 'Image'
-                      }
-                    </p>
-                  </div>
-                </div>
+                </button>
               </div>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
-              <div className="p-4 bg-white/5 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-zinc-400 text-sm">Selfie Verification</p>
-                  <button 
-                    onClick={() => setStep('selfie')}
-                    className="text-xs text-amber-400 hover:text-amber-300"
-                  >
-                    Edit
-                  </button>
-                </div>
-                {selfieImage && (
-                  <img 
-                    src={selfieImage} 
-                    alt="Selfie" 
-                    className="w-32 h-32 object-cover rounded-lg mx-auto"
-                  />
-                )}
-              </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm overflow-y-auto">
+      <GlassCard className="w-full max-w-2xl">
+        <div className="p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+              Identity Verification
+            </h1>
+            <button className="p-2 hover:bg-white/10 rounded-lg">
+              <X size={20} />
+            </button>
+          </div>
 
-              <div className="p-4 bg-white/5 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-zinc-400 text-sm">Digital Signature</p>
-                  <button 
-                    onClick={() => setStep('signature')}
-                    className="text-xs text-amber-400 hover:text-amber-300"
-                  >
-                    Edit
-                  </button>
-                </div>
-                {signatureImage && (
-                  <div className="flex items-center justify-center">
-                    <div className="bg-white p-2 rounded-lg">
-                      <img 
-                        src={signatureImage} 
-                        alt="Signature" 
-                        className="h-12 object-contain"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={goToPrevStep}
-                className="py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
-              >
-                <ArrowLeft size={18} />
-                Back
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className={`py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                  isSubmitting
-                    ? 'bg-amber-500/50 cursor-not-allowed'
-                    : 'bg-amber-500 hover:bg-amber-600'
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw size={18} className="animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    Submit Verification
-                    <Check size={18} />
-                  </>
-                )}
-              </button>
+          {/* Progress Bar */}
+          <div className="mb-8 p-4 bg-gray-800/50 rounded-xl">
+            <h2 className="text-lg font-semibold text-indigo-400 text-center mb-2">
+              Step {currentStep} of {totalSteps - (submissionStatus ? 1 : 0)}
+            </h2>
+            <div className="w-full bg-gray-700 rounded-full h-2.5">
+              <div 
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full transition-all duration-500" 
+                style={{ width: `${Math.min(100, (currentStep / totalSteps) * 100)}%` }}
+              />
             </div>
           </div>
-        )}
 
-        {/* Mock Approve Button */}
-        <div className="mt-6 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
-          <p className="text-sm text-amber-400 mb-2 flex items-center gap-2">
-            <Zap size={16} /> For testing purposes only:
-          </p>
-          <button
-            onClick={handleMockApprove}
-            className="text-sm text-white hover:text-amber-300 underline flex items-center gap-1"
-          >
-            <Sparkles size={14} /> Click here to mock approve and see all options
-          </button>
+          {renderStepContent()}
         </div>
       </GlassCard>
     </div>
   );
 };
+
+// --- Update the TasksView to integrate VideoFeature ---
+const TasksView = () => {
+  // ... existing TasksView code ...
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-4xl font-bold text-white mb-2">
+          <GradientText>Earning Tasks</GradientText>
+        </h1>
+        <p className="text-zinc-400">Complete tasks to earn coins. Click on any category to view available tasks.</p>
+      </div>
+
+      {/* Video Feature Section - Placed at the top for prominence */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <VideoFeature />
+      </motion.div>
+
+      {/* Rest of the TasksView content... */}
+      {/* ... existing TasksView content ... */}
+    </div>
+  );
+};
+
+// --- Update the main component to include showVerification state ---
+// Update the main SRKPortal component to manage showVerification state properly
+
+// ... rest of the code remains the same ...
+
+// Update the GradientText component to fix animation
+const GradientText: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+  gradient?: 'gold' | 'purple' | 'blue' | 'green';
+}> = ({ children, className = '', gradient = 'gold' }) => {
+  const gradientMap = {
+    gold: 'linear-gradient(135deg, #b68938 0%, #e1ba73 100%)',
+    purple: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+    blue: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
+    green: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
+  };
+
+  return (
+    <span
+      className={`bg-clip-text text-transparent font-bold ${className}`}
+      style={{ backgroundImage: gradientMap[gradient] }}
+    >
+      {children}
+    </span>
+  );
+};
+
+// Update the MagneticButton component if needed
+const MagneticButton: React.FC<{
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  small?: boolean;
+  className?: string;
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'premium';
+  fullWidth?: boolean;
+}> = ({ children, onClick, disabled, small, className = "", variant = 'primary', fullWidth = false }) => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (disabled || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    setPosition({ x: x * 0.3, y: y * 0.3 });
+  };
+
+  const handleMouseLeave = () => {
+    setPosition({ x: 0, y: 0 });
+    setIsHovered(false);
+  };
+
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'secondary':
+        return 'bg-white/5 text-white hover:bg-white/10 border border-white/10';
+      case 'danger':
+        return 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20';
+      case 'success':
+        return 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20';
+      case 'premium':
+        return 'bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#8B5CF6] text-white hover:shadow-[0_0_40px_rgba(139,92,246,0.6)]';
+      default:
+        return 'bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black hover:shadow-[0_0_40px_rgba(182,137,56,0.6)]';
+    }
+  };
+
+  return (
+    <motion.button
+      ref={buttonRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      onClick={onClick}
+      disabled={disabled}
+      animate={{ x: position.x, y: position.y }}
+      transition={{ type: "spring", stiffness: 150, damping: 15 }}
+      className={`
+        relative rounded-full font-semibold uppercase tracking-widest
+        active:scale-95 flex items-center gap-2 overflow-hidden group
+        disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none
+        focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950
+        ${small ? 'px-6 py-3 text-xs' : 'px-8 py-4 text-sm'}
+        ${fullWidth ? 'w-full' : ''}
+        ${getVariantStyles()}
+        ${className}
+      `}
+    >
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent"
+        initial={{ x: '-100%' }}
+        animate={{ x: isHovered ? '100%' : '-100%' }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      />
+      
+      {isHovered && (
+        <>
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full"
+              initial={{ x: -10, y: '50%', opacity: 1 }}
+              animate={{ x: '110%', opacity: 0 }}
+              transition={{ duration: 0.6, delay: i * 0.1 }}
+            />
+          ))}
+        </>
+      )}
+      
+      <span className="relative z-10 flex items-center gap-2">
+        {children}
+      </span>
+    </motion.button>
+  );
+};
+
+// Update the StatusBadge component to fix pulse animation
+const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }> = ({ status, small = false, pulse = false }) => {
+  const getConfig = () => {
+    switch (status) {
+      case 'Active':
+      case 'Approved':
+      case 'Completed':
+      case 'Verified':
+        return { 
+          bg: 'bg-emerald-500/10', 
+          text: 'text-emerald-400', 
+          border: 'border-emerald-500/20',
+          icon: <CheckCircle size={small ? 10 : 12} />
+        };
+      case 'Inactive':
+      case 'Rejected':
+        return { 
+          bg: 'bg-rose-500/10', 
+          text: 'text-rose-400', 
+          border: 'border-rose-500/20',
+          icon: <X size={small ? 10 : 12} />
+        };
+      case 'Pending':
+      case 'In Review':
+      case 'Pending Verification':
+      case 'Available':
+        return { 
+          bg: 'bg-amber-500/10', 
+          text: 'text-amber-400', 
+          border: 'border-amber-500/20',
+          icon: <Clock size={small ? 10 : 12} />
+        };
+      case 'Premium':
+      case 'SRK Grow':
+        return { 
+          bg: 'bg-purple-500/10', 
+          text: 'text-purple-400', 
+          border: 'border-purple-500/20',
+          icon: <Crown size={small ? 10 : 12} />
+        };
+      default:
+        return { 
+          bg: 'bg-zinc-500/10', 
+          text: 'text-zinc-400', 
+          border: 'border-zinc-500/20',
+          icon: <Info size={small ? 10 : 12} />
+        };
+    }
+  };
+
+  const config = getConfig();
+  
+  return (
+    <motion.span
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ 
+        opacity: 1, 
+        scale: 1,
+        boxShadow: pulse ? '0 0 0 0 rgba(59, 130, 246, 0.7)' : 'none'
+      }}
+      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border} backdrop-blur-sm ${small ? 'px-2 py-0.5 text-xs' : ''}`}
+    >
+      {config.icon}
+      {status}
+    </motion.span>
+  );
+};
+
 
   // --- SIDEBAR COMPONENT ---
   const Sidebar = () => {
@@ -2230,308 +2811,7 @@ const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   // --- TASKS VIEW ---
-  const TasksView = () => {
-    if (!isApproved) {
-      return (
-        <GlassCard className="p-12 text-center">
-          <Shield size={48} className="text-yellow-400 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-white mb-3">Verification Required</h3>
-          <p className="text-zinc-400 mb-8">Complete identity verification to access earning tasks</p>
-          <MagneticButton onClick={() => setDashView('verification')}>
-            Go to Verification
-          </MagneticButton>
-        </GlassCard>
-      );
-    }
-
-    // Platform Tasks Modal
-    const PlatformTasksModal = () => {
-      if (!showPlatformTasks) return null;
-
-      const platformInfo = allPlatforms.find(p => p.platform === showPlatformTasks.platform);
-      const Icon = platformInfo?.icon;
-
-      return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm">
-          <GlassCard className="w-full max-w-4xl max-h-[90vh] overflow-auto p-8 relative">
-            <button onClick={() => setShowPlatformTasks(null)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-lg">
-              <X size={20} />
-            </button>
-
-            <div className="flex items-center gap-4 mb-6">
-              <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${platformInfo?.gradient} flex items-center justify-center`}>
-                {Icon && React.createElement(Icon, { size: 32, className: platformInfo?.color })}
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-white">{platformInfo?.name} Tasks</h2>
-                <p className="text-zinc-400">{showPlatformTasks.tasks.length} available tasks</p>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {showPlatformTasks.tasks.map((task, idx) => (
-                <GlassCard key={task.id} hover delay={idx * 0.1}>
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h4 className="text-lg font-bold text-white mb-2">{task.title}</h4>
-                        <p className="text-sm text-zinc-400">{task.desc}</p>
-                      </div>
-                      <StatusBadge status={task.status || 'Available'} small />
-                    </div>
-                    
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <Coins size={16} className="text-amber-400" />
-                        <span className="text-lg font-bold text-amber-400">+{task.coins}</span>
-                      </div>
-                      {task.duration && (
-                        <div className="flex items-center gap-2 text-zinc-400">
-                          <Clock size={14} />
-                          <span className="text-sm">{task.duration}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <MagneticButton 
-                      small 
-                      onClick={() => {
-                        setShowPlatformTasks(null);
-                        if (task.type === 'watch') {
-                          setPlayingVideo(task);
-                        } else {
-                          setVerifyingTask(task);
-                        }
-                      }}
-                      className="w-full"
-                    >
-                      {task.type === 'watch' ? 'Watch Video' : 'Start Task'}
-                    </MagneticButton>
-                  </div>
-                </GlassCard>
-              ))}
-            </div>
-          </GlassCard>
-        </div>
-      );
-    };
-
-    return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-4xl font-bold text-white mb-2">
-            <GradientText>Earning Tasks</GradientText>
-          </h1>
-          <p className="text-zinc-400">Complete tasks to earn coins. Click on any category to view available tasks.</p>
-        </div>
-
-        {/* Task Categories */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { 
-              type: 'follow' as TaskType, 
-              icon: Users, 
-              title: 'Follow & Subscribe', 
-              desc: 'Follow social accounts and subscribe to channels', 
-              color: 'from-blue-500/20 to-cyan-500/20',
-              tasks: followTasks 
-            },
-            { 
-              type: 'watch' as TaskType, 
-              icon: Play, 
-              title: 'Watch & Earn', 
-              desc: 'Watch videos and earn coins', 
-              color: 'from-red-500/20 to-pink-500/20',
-              tasks: watchTasks 
-            },
-            { 
-              type: 'post' as TaskType, 
-              icon: Share2, 
-              title: 'Post & Share', 
-              desc: 'Share content on social media', 
-              color: 'from-green-500/20 to-emerald-500/20',
-              tasks: postTasks 
-            },
-          ].map((category) => {
-            const Icon = category.icon;
-            const platformTasks = category.tasks.reduce((acc: Record<SocialPlatform, Task[]>, task) => {
-              if (!acc[task.platform]) acc[task.platform] = [];
-              acc[task.platform].push(task);
-              return acc;
-            }, {});
-
-            return (
-              <GlassCard 
-                key={category.type} 
-                hover 
-                onClick={() => setTaskCategory(category.type)}
-                className="cursor-pointer"
-              >
-                <div className="p-8">
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-6`}>
-                    <Icon size={28} className="text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-3">{category.title}</h3>
-                  <p className="text-zinc-400 mb-6">{category.desc}</p>
-                  
-                  {/* Platform icons */}
-                  <div className="flex gap-2 mb-6">
-                    {Object.entries(platformTasks).map(([platform, tasks]) => {
-                      const platformInfo = allPlatforms.find(p => p.platform === platform);
-                      const PlatformIcon = platformInfo?.icon;
-                      return (
-                        <button
-                          key={platform}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowPlatformTasks({
-                              platform: platform as SocialPlatform,
-                              tasks: tasks
-                            });
-                          }}
-                          className={`p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors`}
-                        >
-                          {PlatformIcon && React.createElement(PlatformIcon, { 
-                            size: 20, 
-                            className: platformInfo?.color 
-                          })}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <MagneticButton small className="w-fit">
-                    View Tasks <ArrowRight size={16} />
-                  </MagneticButton>
-                </div>
-              </GlassCard>
-            );
-          })}
-        </div>
-
-        {/* Rejected Tasks Section */}
-        {rejectedTasks.length > 0 && (
-          <GlassCard className="bg-gradient-to-br from-red-900/20 to-rose-900/20 border-red-500/30">
-            <div className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <AlertTriangle size={28} className="text-red-400" />
-                <div>
-                  <h3 className="text-2xl font-bold text-white">Rejected Tasks</h3>
-                  <p className="text-zinc-400">Review and resubmit your rejected tasks</p>
-                </div>
-                <span className="ml-auto px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
-                  {rejectedTasks.length} pending
-                </span>
-              </div>
-              
-              <div className="space-y-4">
-                {rejectedTasks.map((task) => (
-                  <motion.div
-                    key={task.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${allPlatforms.find(p => p.platform === task.platform)?.gradient} flex items-center justify-center`}>
-                        {React.createElement(socialIcons[task.platform], { 
-                          size: 20, 
-                          className: allPlatforms.find(p => p.platform === task.platform)?.color 
-                        })}
-                      </div>
-                      <div>
-                        <p className="font-medium text-white">{task.title}</p>
-                        <p className="text-sm text-zinc-400">{task.rejectionReason}</p>
-                        <p className="text-xs text-zinc-500 mt-1">{task.date}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setReviewingRejectedTask(task)}
-                        className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors text-sm font-medium"
-                      >
-                        Review
-                      </button>
-                      {task.canRetry && (
-                        <button
-                          onClick={() => {
-                            const originalTask = activeTasks.find(t => t.id === task.taskId);
-                            if (originalTask) {
-                              setVerifyingTask(originalTask);
-                              setRejectedTasks(prev => prev.filter(t => t.id !== task.id));
-                              addNotification('Task ready for resubmission', 'info');
-                            }
-                          }}
-                          className="px-4 py-2 bg-amber-500/10 text-amber-400 rounded-lg hover:bg-amber-500/20 transition-colors text-sm font-medium"
-                        >
-                          Retry
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </GlassCard>
-        )}
-
-        {/* Completed Tasks */}
-        {completed.length > 0 && (
-          <GlassCard className="bg-gradient-to-br from-emerald-900/20 to-green-900/20 border-emerald-500/30">
-            <div className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <CheckCircle size={28} className="text-emerald-400" />
-                <div>
-                  <h3 className="text-2xl font-bold text-white">Completed Tasks</h3>
-                  <p className="text-zinc-400">Tasks you've successfully completed</p>
-                </div>
-                <span className="ml-auto px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium">
-                  {completed.length} completed
-                </span>
-              </div>
-              
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {completed.slice(0, 6).map((taskId, idx) => {
-                  const task = activeTasks.find(t => t.id === taskId);
-                  if (!task) return null;
-                  const platformInfo = allPlatforms.find(p => p.platform === task.platform);
-                  
-                  return (
-                    <motion.div
-                      key={taskId}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="p-4 bg-white/5 rounded-xl"
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`w-10 h-10 rounded-lg ${platformInfo?.gradient} flex items-center justify-center`}>
-                          {React.createElement(socialIcons[task.platform], { 
-                            size: 16, 
-                            className: platformInfo?.color 
-                          })}
-                        </div>
-                        <div>
-                          <p className="font-medium text-white text-sm">{task.title}</p>
-                          <p className="text-xs text-zinc-500">{platformInfo?.name}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-emerald-400 text-sm font-medium">+{task.coins} Coins</span>
-                        <CheckCircle size={14} className="text-emerald-400" />
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          </GlassCard>
-        )}
-
-        <PlatformTasksModal />
-      </div>
-    );
-  };
+ 
 
   // --- TASK MODALS ---
   const PlatformSelectorModal = ({ type, onClose }: any) => (
