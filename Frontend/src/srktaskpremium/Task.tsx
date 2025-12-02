@@ -1,13 +1,14 @@
+import React from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { TrustGrid } from './components/TrustGrid';
 import { Features } from './components/Features';
-import  PhoneSection  from './components/PhoneSection';
+import { PhoneSection } from './components/PhoneSection';
 import { Reviews } from './components/Reviews';
 import { Footer } from './components/Footer';
 import { Zap, Star } from 'lucide-react';
+import { MagneticButton } from './components/ui/MagneticButton';
 import { motion } from 'framer-motion';
-import { MagneticButton } from './ui/MagneticButton';
 
 // Final CTA Component
 const FinalCta = () => {
@@ -27,7 +28,7 @@ const FinalCta = () => {
                     <Star className="w-12 h-12 text-srk-gold mx-auto mb-8 animate-pulse" />
                     
                     <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
-                        Ready to Claim Your <span className="text-transparent bg-clip-text bg-linear-to-r from-srk-gold to-white">Reward?</span>
+                        Ready to Claim Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-srk-gold to-white">Reward?</span>
                     </h2>
                     
                     <p className="text-lg text-gray-400 max-w-xl mx-auto mb-10 font-medium">
@@ -45,7 +46,7 @@ const FinalCta = () => {
     );
 };
 
-function SRKAPP() {
+function  PageDoesntExist() {
   return (
     <main className="bg-[#050505] min-h-screen text-white selection:bg-srk-gold selection:text-black overflow-x-hidden font-sans">
       <Navbar />
@@ -60,4 +61,4 @@ function SRKAPP() {
   );
 }
 
-export default SRKAPP;
+export default PageDoesntExist;

@@ -1,24 +1,22 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import Homepage from "./pages/HomePage/Layout";
-import FeedPage from "./Components/FeedComponent/FeedPage";
-import SignupPage from "./pages/AuthPages/SignupPage";
-import LoginPage from "./pages/AuthPages/LoginPage";
-import SRKTaskLanding from "./pages/Error/PageDoesntExist";
-import SRKAPP from "./SRK/SRKAPP";
-
+import PageDoesntExist from "./srktaskpremium/Task";
+import AfterVerified from "./srktaskpremium/afterVerification";
+import PackageSelectionPage from "./srktaskpremium/SRKGROWONLY/PackageSelectionPage";
+import Dashboard from "./srktaskpremium/Dashboard/Dashboard";
+import GrowOnlyAdminDashboard from "./growonly/GrowOnlyAdminDashboard";
 const App: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-black text-white">
       <Routes>
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<Homepage />}>
-          <Route index element={<FeedPage />} />
-          <Route path="feed" element={<FeedPage />} />
-        </Route>
-        <Route path="*" element={<SRKTaskLanding />} />
-        <Route path ="/srkApp" element={<SRKAPP/>} />
+        <Route path="/pageDoesntExist" element={<PageDoesntExist />} />
+        <Route path="/package" element={<PackageSelectionPage />} />
+        <Route
+          path="/growadmindashboard"
+          element={<GrowOnlyAdminDashboard />}
+        />
+        <Route path="/afterVerified" element={<AfterVerified />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </div>
   );
