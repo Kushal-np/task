@@ -1,30 +1,36 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence} from 'framer-motion';
 import { 
-  X, ArrowRight, UserCircle, Eye, Link, Play, Upload, Youtube, Instagram, 
-  Smartphone, CheckCircle, Clock, Zap, Shield, TrendingUp, DollarSign, Award, 
-  Settings, Wallet, ListChecks, Sparkles, FileText, Send, Check, Facebook, 
-  Ticket, AlertTriangle, LogOut, BarChart3, Users, Home, CreditCard, 
-  ChevronRight, Camera, ShieldCheck, Star, TrendingDown, Activity,
-  ExternalLink, Filter, Search, Crown, Target, Gift, Coins, Bell, 
-  Calendar, Download, Share2, Heart, ThumbsUp, MessageSquare,
-  MoreVertical, RefreshCw, Link2, Globe, Phone, Mail, MapPin,
-  Trophy, Lock, CameraIcon, UserCheck, UsersIcon, Video, 
-  MessageCircle, Hash, Music, Film, Mic, EyeOff, CheckSquare,
-  AlertCircle, Info, PieChart, Cpu, Database, Cloud,
-  ZapOff, GiftIcon, Tag, CreditCardIcon, ShoppingBag, WalletIcon,
+  Menu, X, ArrowRight, UserCircle, Play, Upload, Youtube, Instagram, 
+  Smartphone, CheckCircle, Clock, Zap, Shield, TrendingUp, DollarSign, Award, Wallet, ListChecks, Sparkles, FileText, Send, Check, Facebook, 
+  Ticket, AlertTriangle, LogOut, BarChart3, Users,   
+  ChevronRight, Camera, ShieldCheck, Star, Activity
+  , Search, Crown, Coins, Info,
+  Calendar, Share2,  
+   RefreshCw, 
+  Trophy, Lock, Video, 
+  MessageCircle,
+   
+  
   PenTool,
-  ArrowLeft,
+  
   Loader2,
   ChevronLeft,
-  Minus,
-  RotateCcw,
+  
+ 
   Trash2,
-  Type
+  Type,
+  Pause
 } from 'lucide-react';
 
 
-
+// Add this after the imports section
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
 
 // --- TYPE DEFINITIONS ---
 type SocialPlatform = 'youtube' | 'instagram' | 'tiktok' | 'facebook' | 'twitter';
@@ -137,6 +143,30 @@ const THEME = {
   }
 };
 
+// --- VOLUME ICONS ---
+const VolumeOff = (props: any) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+    <path d="M23 9L17 15" />
+    <path d="M17 9L23 15" />
+  </svg>
+);
+
+const VolumeLow = (props: any) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+  </svg>
+);
+
+const VolumeHigh = (props: any) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+  </svg>
+);
+
 // --- ANIMATED BACKGROUND COMPONENT ---
 const AnimatedBackground = () => {
   return (
@@ -174,7 +204,7 @@ const AnimatedBackground = () => {
       {[...Array(50)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-[2px] h-[2px] bg-gradient-to-r from-[#b68938] to-[#e1ba73] rounded-full"
+          className="absolute w-0.5 h-[2px] bg-linear-to-r from-[#b68938] to-[#e1ba73] rounded-full"
           initial={{
             x: Math.random() * window.innerWidth,
             y: Math.random() * window.innerHeight,
@@ -197,7 +227,7 @@ const AnimatedBackground = () => {
         {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute h-[1px] w-full bg-gradient-to-r from-transparent via-[#b68938]/20 to-transparent"
+            className="absolute h-[1px] w-full bg-linear-to-r from-transparent via-[#b68938]/20 to-transparent"
             style={{ top: `${i * 5}%` }}
             animate={{
               opacity: [0.1, 0.3, 0.1],
@@ -240,7 +270,8 @@ const GlassCard: React.FC<{
   onClick?: () => void;
   delay?: number;
   gradient?: 'gold' | 'purple' | 'blue' | 'green';
-}> = ({ children, className = '', hover = true, onClick, delay = 0, gradient = 'gold' }) => {
+  small?: boolean;
+}> = ({ children, className = '', hover = true, onClick, delay = 0, gradient = 'gold', small = false }) => {
   const gradientMap = {
     gold: 'from-[#b68938]/20 via-[#b68938]/10 to-transparent',
     purple: 'from-[#8B5CF6]/20 via-[#8B5CF6]/10 to-transparent',
@@ -254,19 +285,19 @@ const GlassCard: React.FC<{
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: delay * 0.1 }}
-      whileHover={hover ? { scale: 1.02, y: -4, transition: { duration: 0.2 } } : {}}
-      className={`relative rounded-2xl border border-white/5 bg-gradient-to-br from-white/5 to-white/2 hover:border-white/10 transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      whileHover={hover ? { scale: small ? 1.02 : 1.02, y: -4, transition: { duration: 0.2 } } : {}}
+      className={`relative ${small ? 'rounded-xl' : 'rounded-2xl'} border border-white/5 bg-gradient-to-br from-white/5 to-white/2 hover:border-white/10 transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
       style={{
         backdropFilter: 'blur(12px)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
       }}
     >
       {/* Gradient overlay */}
-      <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradientMap[gradient]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+      <div className={`absolute inset-0 ${small ? 'rounded-xl' : 'rounded-2xl'} bg-gradient-to-br ${gradientMap[gradient]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
       
       {/* Animated border */}
-      <div className="absolute inset-0 rounded-2xl">
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-[#b68938]/0 to-transparent animate-[shimmer_2s_infinite]" />
+      <div className={`absolute inset-0 ${small ? 'rounded-xl' : 'rounded-2xl'}`}>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#b68938]/0 to-transparent animate-[shimmer_2s_infinite]" />
       </div>
       
       <div className="relative z-10">
@@ -738,547 +769,10 @@ const userProfile: UserProfile = {
   documentStatus: 'pending'
 };
 
-// --- MAIN APP COMPONENT ---
-const SRKPortal: React.FC = () => {
-  const [view, setView] = useState<'landing' | 'dashboard'>('landing');
-  const [dashView, setDashView] = useState<DashboardView>('verification');
-  const [showVerification, setShowVerification] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
-  const [hasPurchased, setHasPurchased] = useState(false);
-  const [payoutRequested, setPayoutRequested] = useState(false);
-  const [taskCategory, setTaskCategory] = useState<TaskType | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState<SocialPlatform | null>(null);
-  const [playingVideo, setPlayingVideo] = useState<Task | null>(null);
-  const [completed, setCompleted] = useState<string[]>([]);
-  const [balance, setBalance] = useState<number>(1250);
-  const [eligible, setEligible] = useState<number>(1000);
-  const [verifyingTask, setVerifyingTask] = useState<Task | null>(null);
-  const [showRequestModal, setShowRequestModal] = useState(false);
-  const [rejectedTasks, setRejectedTasks] = useState<RejectedTaskEntry[]>([
-    { 
-      ...followTasks[0], 
-      rejectionReason: "Screenshot blurry, username not visible.", 
-      uploadedProofUrl: 'https://placehold.co/400x300/27272a/FFF?text=Subscription+Proof', 
-      taskId: 'f-yt-1',
-      id: 'f-yt-1-rejected',
-      date: '2024-01-15',
-      adminComment: 'Please ensure your username is clearly visible in the screenshot',
-      canRetry: true
-    },
-    { 
-      ...watchTasks[1], 
-      rejectionReason: "Incomplete watch time, video paused at 80%.", 
-      uploadedProofUrl: 'https://placehold.co/400x300/27272a/FFF?text=Watch+Proof', 
-      taskId: 'w-ig-1',
-      id: 'w-ig-1-rejected',
-      date: '2024-01-14',
-      adminComment: 'Video must be watched completely. Please try again.',
-      canRetry: true
-    },
-    { 
-      ...postTasks[0], 
-      rejectionReason: "Shared post is private. Make it public.", 
-      uploadedProofUrl: 'https://placehold.co/400x300/27272a/FFF?text=Share+Proof', 
-      taskId: 'p-fb-1',
-      id: 'p-fb-1-rejected',
-      date: '2024-01-13',
-      adminComment: 'Please set post visibility to public',
-      canRetry: true
-    },
-  ]);
-  const [reviewingRejectedTask, setReviewingRejectedTask] = useState<RejectedTaskEntry | null>(null);
-  const [identityVerificationStep, setIdentityVerificationStep] = useState<'start' | 'upload' | 'review'>('start');
-  const [notifications, setNotifications] = useState<Array<{ id: number; message: string; type: 'success' | 'error' | 'info' }>>([]);
-  const [activeTasks, setActiveTasks] = useState<Task[]>([...followTasks, ...watchTasks, ...postTasks]);
-  const [profile, setProfile] = useState<UserProfile>(userProfile);
-  const [showPlatformTasks, setShowPlatformTasks] = useState<{platform: SocialPlatform; tasks: Task[]} | null>(null);
+// --- VIDEO FEATURE COMPONENT ---
+// Replace the VideoFeature component with this updated version:
+// Replace the VideoFeature component with this SIMPLER WORKING VERSION:
 
-  // Add notification
-  const addNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    const id = Date.now();
-    setNotifications(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 5000);
-  };
-
-  // Complete a task
-  const completeTask = (taskId: string) => {
-    setActiveTasks(prev => 
-      prev.map(task => 
-        task.id === taskId ? { ...task, status: 'completed' as TaskStatus } : task
-      )
-    );
-    setCompleted(prev => [...prev, taskId]);
-    
-    const task = activeTasks.find(t => t.id === taskId);
-    if (task) {
-      setBalance(prev => prev + task.coins);
-      setEligible(prev => prev + task.coins);
-      addNotification(`Task completed! +${task.coins} Coins earned!`, 'success');
-    }
-  };
-
-  // --- LANDING VIEW ---
-  const LandingView = () => (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      <AnimatedBackground />
-      
-      <div className="relative z-10 text-center px-6 max-w-6xl">
-        <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          className="mb-12"
-        >
-          <h1 className="text-7xl md:text-8xl font-black tracking-tighter mb-6">
-            <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent animate-gradient">
-              EARN THROUGH TASKS
-            </span>
-          </h1>
-          <p className="text-xl md:text-2xl text-zinc-300 max-w-3xl mx-auto mb-8 leading-relaxed">
-            Transform your social engagement into real rewards. Complete verified tasks, earn coins, and unlock premium features.
-          </p>
-          
-          {/* Animated stats */}
-          <div className="flex justify-center gap-8 mb-12">
-            {[
-              { value: '10K+', label: 'Active Users' },
-              { value: '500K+', label: 'Coins Earned' },
-              { value: '98%', label: 'Success Rate' },
-              { value: '24/7', label: 'Support' },
-            ].map((stat, idx) => (
-              <motion.div
-                key={stat.label}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 + idx * 0.1 }}
-                className="text-center"
-              >
-                <div className="text-3xl font-bold text-amber-400">{stat.value}</div>
-                <div className="text-sm text-zinc-500">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mb-16"
-        >
-          <MagneticButton 
-            onClick={() => {
-              setView('dashboard');
-              addNotification('Welcome to SRK Portal!', 'success');
-            }} 
-            className="text-lg relative"
-          >
-            <span className="flex items-center gap-3">
-              <Sparkles size={24} />
-              Join Now & Start Earning
-              <ArrowRight size={24} />
-            </span>
-            
-            {/* Floating coins animation */}
-            <motion.div
-              className="absolute -top-4 -right-4"
-              animate={{
-                y: [0, -10, 0],
-                rotate: [0, 360],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-            >
-              <Coins size={20} className="text-amber-400" />
-            </motion.div>
-          </MagneticButton>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          {[
-            { icon: <Zap size={32} />, title: 'Instant Rewards', desc: 'Get coins immediately after task completion', color: 'from-amber-500/20 to-yellow-500/20' },
-            { icon: <Shield size={32} />, title: 'Verified Tasks', desc: 'All tasks are verified for authenticity', color: 'from-blue-500/20 to-cyan-500/20' },
-            { icon: <TrendingUp size={32} />, title: 'Growth Opportunities', desc: 'Unlock higher rewards with SRK Grow', color: 'from-purple-500/20 to-pink-500/20' },
-          ].map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-              whileHover={{ y: -5 }}
-            >
-              <GlassCard hover gradient={index === 0 ? 'gold' : index === 1 ? 'blue' : 'purple'}>
-                <div className="p-6">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4`}>
-                    <div className="text-amber-400">{feature.icon}</div>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                  <p className="text-zinc-400">{feature.desc}</p>
-                </div>
-              </GlassCard>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Floating animated elements */}
-        <motion.div
-          animate={{
-            y: [0, -20, 0],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute top-1/4 left-10 opacity-20"
-        >
-          <Coins size={40} className="text-amber-400" />
-        </motion.div>
-        <motion.div
-          animate={{
-            y: [0, 20, 0],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
-          className="absolute bottom-1/4 right-10 opacity-20"
-        >
-          <Trophy size={40} className="text-purple-400" />
-        </motion.div>
-      </div>
-    </div>
-  );
-
-  // --- VERIFICATION MODAL ---
-
-
-interface VerificationModalProps {
-  setShowVerification: (show: boolean) => void;
-  setIsApproved: (approved: boolean) => void;
-  setProfile: (profile: any) => void;
-}
-const VideoFeature = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const [showControls, setShowControls] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const updateProgress = () => {
-      if (video.duration) {
-        setProgress((video.currentTime / video.duration) * 100);
-      }
-    };
-
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleEnded = () => setIsPlaying(false);
-
-    video.addEventListener('timeupdate', updateProgress);
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-    video.addEventListener('ended', handleEnded);
-
-    return () => {
-      video.removeEventListener('timeupdate', updateProgress);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-      video.removeEventListener('ended', handleEnded);
-    };
-  }, []);
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (isPlaying) {
-      video.pause();
-    } else {
-      video.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const time = (parseFloat(e.target.value) / 100) * video.duration;
-    video.currentTime = time;
-    setProgress(parseFloat(e.target.value));
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const newVolume = parseFloat(e.target.value);
-    video.volume = newVolume;
-    setVolume(newVolume);
-  };
-
-  const toggleFullscreen = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (!document.fullscreenElement) {
-      video.requestFullscreen().then(() => setIsFullscreen(true));
-    } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false));
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  return (
-    <div className="w-full max-w-4xl mx-auto">
-      <GlassCard>
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-red-500/20 to-pink-500/20 flex items-center justify-center">
-              <Video size={24} className="text-red-400" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">Video Feature Demo</h2>
-              <p className="text-zinc-400">Watch and interact with our premium video player</p>
-            </div>
-          </div>
-
-          {/* Video Player Container */}
-          <div className="relative bg-black rounded-xl overflow-hidden group"
-               onMouseEnter={() => setShowControls(true)}
-               onMouseLeave={() => setShowControls(false)}>
-            
-            {/* Video Element */}
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              className="w-full aspect-video object-cover"
-              onClick={togglePlay}
-            />
-
-            {/* Play/Pause Overlay */}
-            {!isPlaying && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer"
-                onClick={togglePlay}
-              >
-                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center hover:scale-110 transition-transform">
-                  <Play size={32} className="text-white ml-1" />
-                </div>
-              </motion.div>
-            )}
-
-            {/* Video Controls */}
-            <motion.div
-              initial={{ y: 100 }}
-              animate={{ y: showControls ? 0 : 100 }}
-              transition={{ type: 'spring', damping: 25 }}
-              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4"
-            >
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={progress}
-                  onChange={handleSeek}
-                  className="w-full h-1.5 bg-zinc-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-                />
-              </div>
-
-              {/* Control Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={togglePlay}
-                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                  >
-                    {isPlaying ? (
-                      <X size={20} className="text-white" />
-                    ) : (
-                      <Play size={20} className="text-white" />
-                    )}
-                  </button>
-
-                  {/* Volume Control */}
-                  <div className="flex items-center gap-2">
-                    <VolumeIcon volume={volume} />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={volume}
-                      onChange={handleVolumeChange}
-                      className="w-20 h-1 bg-zinc-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-                    />
-                  </div>
-
-                  {/* Time Display */}
-                  <span className="text-sm text-zinc-300">
-                    {videoRef.current ? formatTime(videoRef.current.currentTime) : '0:00'} / {videoRef.current ? formatTime(videoRef.current.duration || 0) : '0:00'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {/* Playback Speed */}
-                  <div className="relative group">
-                    <button className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-colors">
-                      {playbackRate}x
-                    </button>
-                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">
-                      <div className="bg-zinc-900 border border-white/10 rounded-lg p-2 min-w-[100px]">
-                        {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                          <button
-                            key={rate}
-                            onClick={() => {
-                              if (videoRef.current) {
-                                videoRef.current.playbackRate = rate;
-                                setPlaybackRate(rate);
-                              }
-                            }}
-                            className={`w-full px-3 py-1 text-sm rounded hover:bg-white/10 ${
-                              playbackRate === rate ? 'text-amber-400' : 'text-zinc-300'
-                            }`}
-                          >
-                            {rate}x
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Fullscreen Toggle */}
-                  <button
-                    onClick={toggleFullscreen}
-                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                  >
-                    {isFullscreen ? (
-                      <Minus size={20} className="text-white" />
-                    ) : (
-                      <ExternalLink size={20} className="text-white" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Video Stats Overlay */}
-            <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
-              <div className="flex items-center gap-2 text-xs text-white">
-                <Activity size={12} />
-                <span>HD • 1080p</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Video Info */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <GlassCard small>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Eye size={16} className="text-blue-400" />
-                  <span className="text-sm text-zinc-400">Views</span>
-                </div>
-                <p className="text-xl font-bold text-white">1.2M</p>
-              </div>
-            </GlassCard>
-
-            <GlassCard small>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <ThumbsUp size={16} className="text-green-400" />
-                  <span className="text-sm text-zinc-400">Likes</span>
-                </div>
-                <p className="text-xl font-bold text-white">45.2K</p>
-              </div>
-            </GlassCard>
-
-            <GlassCard small>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageSquare size={16} className="text-purple-400" />
-                  <span className="text-sm text-zinc-400">Comments</span>
-                </div>
-                <p className="text-xl font-bold text-white">3.8K</p>
-              </div>
-            </GlassCard>
-          </div>
-
-          {/* Video Description */}
-          <div className="mt-6 p-4 bg-white/5 rounded-xl">
-            <h3 className="text-lg font-bold text-white mb-2">Big Buck Bunny</h3>
-            <p className="text-zinc-300">
-              A large and lovable rabbit fights back against his tormentors by rallying his forest friends.
-              This open movie is brought to you by the Blender Institute.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-4">
-              <span className="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full text-sm">Animation</span>
-              <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-sm">Comedy</span>
-              <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-sm">Family</span>
-              <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm">HD</span>
-            </div>
-          </div>
-        </div>
-      </GlassCard>
-    </div>
-  );
-};
-
-// Helper component for volume icon
-const VolumeIcon = ({ volume }: { volume: number }) => {
-  if (volume === 0) return <VolumeOff size={20} className="text-white" />;
-  if (volume < 0.5) return <VolumeLow size={20} className="text-white" />;
-  return <VolumeHigh size={20} className="text-white" />;
-};
-
-// Add missing volume icons
-const VolumeOff = (props: any) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-    <path d="M23 9L17 15" />
-    <path d="M17 9L23 15" />
-  </svg>
-);
-
-const VolumeLow = (props: any) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-  </svg>
-);
-
-const VolumeHigh = (props: any) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-  </svg>
-);
 
 // --- SIGNATURE DRAWING COMPONENT ---
 interface SignaturePadProps {
@@ -1292,7 +786,6 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, width = 400, height
   const [isDrawing, setIsDrawing] = useState(false);
   const [lineColor, setLineColor] = useState('#FFFFFF');
   const [lineWidth, setLineWidth] = useState(2);
-  const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1344,7 +837,6 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, width = 400, height
     const { x, y } = getCanvasCoordinates(e);
     
     setIsDrawing(true);
-    setLastPosition({ x, y });
     
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -1368,7 +860,6 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, width = 400, height
     ctx.beginPath();
     ctx.moveTo(x, y);
     
-    setLastPosition({ x, y });
   };
 
   const stopDrawing = () => {
@@ -1393,26 +884,11 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, width = 400, height
     onSave(signature);
   };
 
-  const drawLine = (width: number) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-
-    // Draw a sample line to demonstrate the brush size
-    const yPos = height - 20;
-    ctx.beginPath();
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = width;
-    ctx.moveTo(50, yPos);
-    ctx.lineTo(width * 10 + 50, yPos);
-    ctx.stroke();
-  };
-
   return (
     <GlassCard>
       <div className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-linear-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
             <PenTool size={24} className="text-blue-400" />
           </div>
           <div>
@@ -1581,112 +1057,13 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, width = 400, height
   );
 };
 
-// Add the missing GlassCard small prop interface
-interface GlassCardSmallProps {
-  children: React.ReactNode;
-  className?: string;
+// --- VERIFICATION MODAL ---
+interface VerificationModalProps {
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-const GlassCardSmall: React.FC<GlassCardSmallProps> = ({ children, className = '' }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`relative rounded-xl border border-white/5 bg-gradient-to-br from-white/5 to-white/2 hover:border-white/10 transition-all duration-300 ${className}`}
-      style={{
-        backdropFilter: 'blur(12px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-      }}
-    >
-      <div className="relative z-10">
-        {children}
-      </div>
-    </motion.div>
-  );
-};
-
-// --- THEME CONFIGURATION ---
-const THEME = {
-  colors: {
-    bgDeepBlack: '#0a0a0a',
-    bgCard: 'rgba(26, 20, 16, 0.4)',
-    goldAccent: '#b68938',
-    goldLight: '#e1ba73',
-    goldGradient: 'linear-gradient(135deg, #b68938 0%, #e1ba73 100%)',
-    purpleGradient: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-    blueGradient: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
-    greenGradient: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-    textWhite: '#F3F4F6',
-    textGray: '#9CA3AF',
-    greenSuccess: '#10B981',
-    redAlert: '#EF4444',
-    blueInfo: '#3B82F6',
-    orangeWarn: '#F59E0B',
-    purplePremium: '#8B5CF6',
-    pinkVibrant: '#EC4899',
-    cyanBright: '#06B6D4',
-  },
-  effects: {
-    glass: 'backdrop-blur-xl',
-    shadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-    goldGlow: '0 0 20px rgba(182, 137, 56, 0.3)',
-    purpleGlow: '0 0 20px rgba(139, 92, 246, 0.3)',
-    blueGlow: '0 0 20px rgba(59, 130, 246, 0.3)',
-  },
-  animations: {
-    float: 'float 6s ease-in-out infinite',
-    pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-    shimmer: 'shimmer 2s infinite linear',
-  }
-};
-
-// Update the GlassCard component to include small prop
-const GlassCard: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-  hover?: boolean;
-  onClick?: () => void;
-  delay?: number;
-  gradient?: 'gold' | 'purple' | 'blue' | 'green';
-  small?: boolean;
-}> = ({ children, className = '', hover = true, onClick, delay = 0, gradient = 'gold', small = false }) => {
-  const gradientMap = {
-    gold: 'from-[#b68938]/20 via-[#b68938]/10 to-transparent',
-    purple: 'from-[#8B5CF6]/20 via-[#8B5CF6]/10 to-transparent',
-    blue: 'from-[#3B82F6]/20 via-[#3B82F6]/10 to-transparent',
-    green: 'from-[#10B981]/20 via-[#10B981]/10 to-transparent',
-  };
-
-  return (
-    <motion.div
-      onClick={onClick}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: delay * 0.1 }}
-      whileHover={hover ? { scale: small ? 1.02 : 1.02, y: -4, transition: { duration: 0.2 } } : {}}
-      className={`relative ${small ? 'rounded-xl' : 'rounded-2xl'} border border-white/5 bg-gradient-to-br from-white/5 to-white/2 hover:border-white/10 transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
-      style={{
-        backdropFilter: 'blur(12px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-      }}
-    >
-      {/* Gradient overlay */}
-      <div className={`absolute inset-0 ${small ? 'rounded-xl' : 'rounded-2xl'} bg-gradient-to-br ${gradientMap[gradient]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-      
-      {/* Animated border */}
-      <div className={`absolute inset-0 ${small ? 'rounded-xl' : 'rounded-2xl'}`}>
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#b68938]/0 to-transparent animate-[shimmer_2s_infinite]" />
-      </div>
-      
-      <div className="relative z-10">
-        {children}
-      </div>
-    </motion.div>
-  );
-};
-
-// --- Update Verification Modal to include SignaturePad ---
-const VerificationModal = () => {
+const VerificationModal: React.FC<VerificationModalProps> = ({ onClose, onSuccess }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     documentFile: null as File | null,
@@ -1812,6 +1189,10 @@ const VerificationModal = () => {
     if (Math.random() > 0.1) {
       setSubmissionStatus('success');
       setCurrentStep(totalSteps);
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 2000);
     } else {
       setSubmissionStatus('error');
       setCurrentStep(totalSteps);
@@ -1827,8 +1208,8 @@ const VerificationModal = () => {
             <h2 className="text-xl font-semibold text-white">1. Upload Document</h2>
             <p className="text-gray-400">Please upload a valid government-issued ID (e.g., Passport, Driver's License).</p>
             
-            <div className="border-2 border-dashed border-indigo-500 rounded-lg p-8 text-center bg-gray-700/50">
-              <Upload className="w-8 h-8 mx-auto text-indigo-400 mb-3" />
+            <div className="border-2 border-dashed border-[#ac9976] rounded-lg p-8 text-center bg-gray-700/50">
+              <Upload className="w-8 h-8 mx-auto from-[#ac9976] to-[#e1ba73] mb-3" />
               <input 
                 type="file" 
                 id="documentUpload"
@@ -1838,7 +1219,7 @@ const VerificationModal = () => {
               />
               <label 
                 htmlFor="documentUpload"
-                className="cursor-pointer text-indigo-400 hover:text-indigo-300 font-medium transition"
+                className="cursor-pointer text-amber-400 hover:text-amber-300 font-medium transition"
               >
                 {formData.documentFile ? formData.documentFile.name : 'Click to select file'}
               </label>
@@ -1849,7 +1230,7 @@ const VerificationModal = () => {
               <button 
                 onClick={nextStep} 
                 disabled={!formData.documentFile}
-                className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-800 disabled:text-gray-500 flex items-center"
+                className="px-6 py-2 bg-linear-to-r from-[#ac9976] to-[#e1ba73] text-black font-medium rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 Next: Selfie <ChevronRight className="w-4 h-4 ml-2" />
               </button>
@@ -1881,13 +1262,13 @@ const VerificationModal = () => {
                     </>
                   ) : (
                     <>
-                      <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-2" />
+                      <Loader2 className="w-8 h-8 text-amber-400 animate-spin mb-2" />
                       <p className="text-white font-medium mb-4">Initializing camera...</p>
                     </>
                   )}
                   <button 
                     onClick={startCamera}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg flex items-center transition"
+                    className="bg-linear-to-r from-[#ac9976] to-[#e1ba73] hover:opacity-90 text-black font-semibold py-2 px-6 rounded-lg flex items-center transition"
                   >
                     <Camera className="w-5 h-5 mr-2" /> Start Camera
                   </button>
@@ -1896,7 +1277,7 @@ const VerificationModal = () => {
 
               {formData.selfieImage && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90">
-                  <img src={formData.selfieImage} alt="Selfie Preview" className="max-h-full max-w-full object-contain rounded-xl shadow-xl border-4 border-indigo-500"/>
+                  <img src={formData.selfieImage} alt="Selfie Preview" className="max-h-full max-w-full object-contain rounded-xl shadow-xl border-4 border-amber-500"/>
                   <button 
                     onClick={() => { setFormData(f => ({ ...f, selfieImage: null })); startCamera(); }}
                     className="absolute top-2 right-2 p-2 bg-red-600 rounded-full text-white hover:bg-red-700 transition"
@@ -1919,14 +1300,14 @@ const VerificationModal = () => {
                 <button 
                   onClick={takePicture} 
                   disabled={!isCameraActive}
-                  className="p-3 bg-red-500 rounded-full hover:bg-red-600 disabled:bg-gray-600 transition shadow-lg"
+                  className="p-3 bg-linear-to-r from-[#ac9976] to-yellow-500 rounded-full hover:opacity-90 disabled:opacity-50 transition shadow-lg"
                 >
-                  <Camera className="w-6 h-6 text-white" />
+                  <Camera className="w-6 h-6 text-black" />
                 </button>
               ) : (
                 <button 
                   onClick={nextStep} 
-                  className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition flex items-center"
+                  className="px-6 py-2 bg-linear-to-r from-[#ac9976] to-yellow-500 text-black font-medium rounded-lg hover:opacity-90 transition flex items-center"
                 >
                   Next: Signature <ChevronRight className="w-4 h-4 ml-2" />
                 </button>
@@ -1952,9 +1333,11 @@ const VerificationModal = () => {
               <button 
                 onClick={nextStep} 
                 disabled={!formData.signature}
-                className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-800 disabled:text-gray-500 flex items-center"
+                className="px-6 py-2 bg-linear-to-r from-[#ac9976] to-[#e1ba73] text-black font-medium rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
-                Next: Details <ChevronRight className="w-4 h-4 ml-2" />
+
+                Next: Details
+                 <ChevronRight className="w-4 h-4 ml-2" />
               </button>
             </div>
           </div>
@@ -1970,7 +1353,7 @@ const VerificationModal = () => {
                 placeholder="Full Name (as per ID)"
                 value={formData.fullName}
                 onChange={handleInputChange}
-                className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:ring-amber-500/50 focus:border-amber-500/50"
               />
               <input 
                 type="date"
@@ -1978,14 +1361,14 @@ const VerificationModal = () => {
                 placeholder="Date of Birth"
                 value={formData.dob}
                 onChange={handleInputChange}
-                className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:ring-amber-500/50 focus:border-amber-500/50"
               />
               
               {/* Signature Preview */}
               {formData.signature && (
                 <div>
                   <p className="text-gray-400 mb-2">Signature Preview:</p>
-                  <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
+                  <div className="p-4 bg-white/5 rounded-lg border border-white/10">
                     <img 
                       src={formData.signature} 
                       alt="Signature Preview" 
@@ -2006,7 +1389,7 @@ const VerificationModal = () => {
               <button 
                 onClick={nextStep} 
                 disabled={!formData.fullName || !formData.dob || !formData.signature}
-                className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-800 disabled:text-gray-500 flex items-center"
+                className="px-6 py-2 bg-linear-to-r from-[#ac9976] to-[#e1ba73]  text-black font-medium rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 Next: Review <ChevronRight className="w-4 h-4 ml-2" />
               </button>
@@ -2017,49 +1400,52 @@ const VerificationModal = () => {
         return (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-white">5. Review and Submit</h2>
-            <div className="space-y-3 p-4 bg-gray-700 rounded-lg">
+            <div className="space-y-3 p-4 bg-white/5 rounded-lg">
               <div className="text-sm">
-                <span className="font-semibold text-gray-400">Document:</span> <span className="text-white">{formData.documentFile?.name || 'Missing'}</span>
+                <span className="font-semibold text-gray-400">Document:</span> <span className="text-white ml-2">{formData.documentFile?.name || 'Missing'}</span>
               </div>
               <div className="text-sm">
                 <span className="font-semibold text-gray-400">Selfie:</span> 
                 <span className="text-white ml-2">{formData.selfieImage ? 'Captured' : 'Missing'}</span>
                 {formData.selfieImage && (
-                  <img src={formData.selfieImage} alt="Selfie" className="w-16 h-auto mt-2 rounded-md border border-indigo-500" />
+                  <img src={formData.selfieImage} alt="Selfie" className="w-16 h-auto mt-2 rounded-md border border-amber-500" />
                 )}
               </div>
               <div className="text-sm">
                 <span className="font-semibold text-gray-400">Signature:</span> 
                 <span className="text-white ml-2">{formData.signature ? 'Provided' : 'Missing'}</span>
                 {formData.signature && (
-                  <img src={formData.signature} alt="Signature" className="w-32 h-auto mt-2 rounded-md border border-indigo-500" />
+                  <img src={formData.signature} alt="Signature" className="w-32 h-auto mt-2 rounded-md border border-amber-500" />
                 )}
               </div>
               <div className="text-sm">
-                <span className="font-semibold text-gray-400">Name:</span> <span className="text-white">{formData.fullName || 'Missing'}</span>
+                <span className="font-semibold text-gray-400">Name:</span> <span className="text-white ml-2">{formData.fullName || 'Missing'}</span>
               </div>
               <div className="text-sm">
-                <span className="font-semibold text-gray-400">DOB:</span> <span className="text-white">{formData.dob || 'Missing'}</span>
+                <span className="font-semibold text-gray-400">DOB:</span> <span className="text-white ml-2">{formData.dob || 'Missing'}</span>
               </div>
-              <div className="text-sm text-yellow-400 pt-3 italic">
+              <div className="text-sm text-amber-400 pt-3 italic">
                 I confirm that all information provided is accurate and true.
               </div>
             </div>
 
             {submissionStatus === 'success' ? (
-              <div className="text-center p-6 bg-green-500/10 border border-green-500/20 rounded-xl">
-                <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-4" />
+              <div className="text-center p-6 bg-linear-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-xl">
+                <CheckCircle className="w-12 h-12 mx-auto text-emerald-500 mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">Verification Submitted!</h3>
                 <p className="text-gray-400">Your identity verification is under review. This may take 1-2 business days.</p>
+                <div className="mt-4 text-sm text-emerald-400">
+                  Redirecting to Tasks tab...
+                </div>
               </div>
             ) : submissionStatus === 'error' ? (
-              <div className="text-center p-6 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <div className="text-center p-6 bg-linear-to-r from-red-500/10 to-rose-500/10 border border-red-500/20 rounded-xl">
                 <AlertTriangle className="w-12 h-12 mx-auto text-red-500 mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">Submission Failed</h3>
                 <p className="text-gray-400">An error occurred. Please check your connection and try again.</p>
                 <button 
                   onClick={() => setCurrentStep(4)} 
-                  className="mt-4 px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
+                  className="mt-4 px-6 py-2 bg-linear-to-r from-amber-500 to-yellow-500 text-black font-medium rounded-lg hover:opacity-90 transition"
                 >
                   Try Again
                 </button>
@@ -2075,7 +1461,7 @@ const VerificationModal = () => {
                 <button 
                   onClick={handleSubmit} 
                   disabled={isSubmitting || !formData.documentFile || !formData.selfieImage || !formData.signature || !formData.fullName || !formData.dob}
-                  className="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition disabled:bg-gray-600 flex items-center"
+                  className="px-6 py-2 bg-linear-to-r from-emerald-500 to-green-500 text-white font-medium rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
                   {isSubmitting ? (
                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>
@@ -2094,25 +1480,33 @@ const VerificationModal = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm overflow-y-auto">
-      <GlassCard className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl bg-linear-to-br from-[#1a1410]/90 to-[#0a0a0a]/90 border border-amber-500/20 rounded-2xl shadow-2xl">
         <div className="p-6 sm:p-8">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Identity Verification
+              <span className="bg-linear-to-r from-[#ac9976] to-[#e1ba73] bg-clip-text text-transparent">
+                <GradientText>
+
+                Identity Verification
+                </GradientText>
+              </span>
             </h1>
-            <button className="p-2 hover:bg-white/10 rounded-lg">
-              <X size={20} />
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <X size={20} className="text-white" />
             </button>
           </div>
 
           {/* Progress Bar */}
-          <div className="mb-8 p-4 bg-gray-800/50 rounded-xl">
-            <h2 className="text-lg font-semibold text-indigo-400 text-center mb-2">
+          <div className="mb-8 p-4 bg-white/5 rounded-xl border border-white/10">
+            <h2 className="text-lg font-semibold from-[#ac9976] to-[#e1ba73] text-center mb-2">
               Step {currentStep} of {totalSteps - (submissionStatus ? 1 : 0)}
             </h2>
-            <div className="w-full bg-gray-700 rounded-full h-2.5">
+            <div className="w-full bg-white/10 rounded-full h-2.5">
               <div 
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full transition-all duration-500" 
+                className="bg-linear-to-r from-[#ac9976] to-[#e1ba73] h-2.5 rounded-full transition-all duration-500" 
                 style={{ width: `${Math.min(100, (currentStep / totalSteps) * 100)}%` }}
               />
             </div>
@@ -2120,226 +1514,357 @@ const VerificationModal = () => {
 
           {renderStepContent()}
         </div>
-      </GlassCard>
-    </div>
-  );
-};
-
-// --- Update the TasksView to integrate VideoFeature ---
-const TasksView = () => {
-  // ... existing TasksView code ...
-
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold text-white mb-2">
-          <GradientText>Earning Tasks</GradientText>
-        </h1>
-        <p className="text-zinc-400">Complete tasks to earn coins. Click on any category to view available tasks.</p>
       </div>
-
-      {/* Video Feature Section - Placed at the top for prominence */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <VideoFeature />
-      </motion.div>
-
-      {/* Rest of the TasksView content... */}
-      {/* ... existing TasksView content ... */}
     </div>
   );
 };
 
-// --- Update the main component to include showVerification state ---
-// Update the main SRKPortal component to manage showVerification state properly
-
-// ... rest of the code remains the same ...
-
-// Update the GradientText component to fix animation
-const GradientText: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-  gradient?: 'gold' | 'purple' | 'blue' | 'green';
-}> = ({ children, className = '', gradient = 'gold' }) => {
-  const gradientMap = {
-    gold: 'linear-gradient(135deg, #b68938 0%, #e1ba73 100%)',
-    purple: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-    blue: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
-    green: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-  };
-
-  return (
-    <span
-      className={`bg-clip-text text-transparent font-bold ${className}`}
-      style={{ backgroundImage: gradientMap[gradient] }}
+// --- MAIN APP COMPONENT ---
+const AfterVerified: React.FC = () => {
+  const [view, setView] = useState<'landing' | 'dashboard'>('landing');
+  const [dashView, setDashView] = useState<DashboardView>('verification');
+  const [showVerification, setShowVerification] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [payoutRequested, setPayoutRequested] = useState(false);
+  const [taskCategory, setTaskCategory] = useState<TaskType | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<SocialPlatform | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<Task | null>(null);
+  const [completed, setCompleted] = useState<string[]>([]);
+  const [balance, setBalance] = useState<number>(1250);
+  const [eligible, setEligible] = useState<number>(1000);
+  const [verifyingTask, setVerifyingTask] = useState<Task | null>(null);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [rejectedTasks, setRejectedTasks] = useState<RejectedTaskEntry[]>([
+    { 
+      ...followTasks[0], 
+      rejectionReason: "Screenshot blurry, username not visible.", 
+      uploadedProofUrl: 'https://placehold.co/400x300/27272a/FFF?text=Subscription+Proof', 
+      taskId: 'f-yt-1',
+      id: 'f-yt-1-rejected',
+      date: '2024-01-15',
+      adminComment: 'Please ensure your username is clearly visible in the screenshot',
+      canRetry: true
+    },
+    { 
+      ...watchTasks[1], 
+      rejectionReason: "Incomplete watch time, video paused at 80%.", 
+      uploadedProofUrl: 'https://placehold.co/400x300/27272a/FFF?text=Watch+Proof', 
+      taskId: 'w-ig-1',
+      id: 'w-ig-1-rejected',
+      date: '2024-01-14',
+      adminComment: 'Video must be watched completely. Please try again.',
+      canRetry: true
+    },
+    { 
+      ...postTasks[0], 
+      rejectionReason: "Shared post is private. Make it public.", 
+      uploadedProofUrl: 'https://placehold.co/400x300/27272a/FFF?text=Share+Proof', 
+      taskId: 'p-fb-1',
+      id: 'p-fb-1-rejected',
+      date: '2024-01-13',
+      adminComment: 'Please set post visibility to public',
+      canRetry: true
+    },
+  ]);
+  const [reviewingRejectedTask, setReviewingRejectedTask] = useState<RejectedTaskEntry | null>(null);
+  const [notifications, setNotifications] = useState<Array<{ id: number; message: string; type: 'success' | 'error' | 'info' }>>([]);
+  const [activeTasks, setActiveTasks] = useState<Task[]>([...followTasks, ...watchTasks, ...postTasks]);
+  const [profile, setProfile] = useState<UserProfile>(userProfile);
+const MobileMenu = () => (
+  <>
+    {/* Hamburger Button */}
+    <button
+      onClick={() => setIsMenuOpen(!isMenuOpen)}
+      className="lg:hidden fixed top-6 right-6 z-50 p-2 bg-black/50 backdrop-blur-sm rounded-lg border border-white/10"
     >
-      {children}
-    </span>
-  );
-};
+      <Menu size={24} className="text-white" />
+    </button>
 
-// Update the MagneticButton component if needed
-const MagneticButton: React.FC<{
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  small?: boolean;
-  className?: string;
-  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'premium';
-  fullWidth?: boolean;
-}> = ({ children, onClick, disabled, small, className = "", variant = 'primary', fullWidth = false }) => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (disabled || !buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    setPosition({ x: x * 0.3, y: y * 0.3 });
-  };
-
-  const handleMouseLeave = () => {
-    setPosition({ x: 0, y: 0 });
-    setIsHovered(false);
-  };
-
-  const getVariantStyles = () => {
-    switch (variant) {
-      case 'secondary':
-        return 'bg-white/5 text-white hover:bg-white/10 border border-white/10';
-      case 'danger':
-        return 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20';
-      case 'success':
-        return 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20';
-      case 'premium':
-        return 'bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#8B5CF6] text-white hover:shadow-[0_0_40px_rgba(139,92,246,0.6)]';
-      default:
-        return 'bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black hover:shadow-[0_0_40px_rgba(182,137,56,0.6)]';
-    }
-  };
-
-  return (
-    <motion.button
-      ref={buttonRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={handleMouseLeave}
-      onClick={onClick}
-      disabled={disabled}
-      animate={{ x: position.x, y: position.y }}
-      transition={{ type: "spring", stiffness: 150, damping: 15 }}
-      className={`
-        relative rounded-full font-semibold uppercase tracking-widest
-        active:scale-95 flex items-center gap-2 overflow-hidden group
-        disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none
-        focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950
-        ${small ? 'px-6 py-3 text-xs' : 'px-8 py-4 text-sm'}
-        ${fullWidth ? 'w-full' : ''}
-        ${getVariantStyles()}
-        ${className}
-      `}
-    >
+    {/* Mobile Menu Overlay */}
+    {isMenuOpen && (
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent"
-        initial={{ x: '-100%' }}
-        animate={{ x: isHovered ? '100%' : '-100%' }}
-        transition={{ duration: 0.6, ease: "easeInOut" }}
-      />
-      
-      {isHovered && (
-        <>
-          {[...Array(3)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-white rounded-full"
-              initial={{ x: -10, y: '50%', opacity: 1 }}
-              animate={{ x: '110%', opacity: 0 }}
-              transition={{ duration: 0.6, delay: i * 0.1 }}
-            />
-          ))}
-        </>
-      )}
-      
-      <span className="relative z-10 flex items-center gap-2">
-        {children}
-      </span>
-    </motion.button>
-  );
-};
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="lg:hidden fixed inset-0 z-40 bg-black/90 backdrop-blur-sm"
+        onClick={() => setIsMenuOpen(false)}
+      >
+        <motion.div
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: "spring", damping: 25 }}
+          className="absolute right-0 top-0 h-full w-80 bg-linear-to-b from-[#1a1410] to-[#0a0a0a] border-l border-white/10 shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-6">
+            {/* Close Button */}
+            <div className="flex justify-end mb-8">
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-lg"
+              >
+                <X size={24} className="text-white" />
+              </button>
+            </div>
 
-// Update the StatusBadge component to fix pulse animation
-const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }> = ({ status, small = false, pulse = false }) => {
-  const getConfig = () => {
-    switch (status) {
-      case 'Active':
-      case 'Approved':
-      case 'Completed':
-      case 'Verified':
-        return { 
-          bg: 'bg-emerald-500/10', 
-          text: 'text-emerald-400', 
-          border: 'border-emerald-500/20',
-          icon: <CheckCircle size={small ? 10 : 12} />
-        };
-      case 'Inactive':
-      case 'Rejected':
-        return { 
-          bg: 'bg-rose-500/10', 
-          text: 'text-rose-400', 
-          border: 'border-rose-500/20',
-          icon: <X size={small ? 10 : 12} />
-        };
-      case 'Pending':
-      case 'In Review':
-      case 'Pending Verification':
-      case 'Available':
-        return { 
-          bg: 'bg-amber-500/10', 
-          text: 'text-amber-400', 
-          border: 'border-amber-500/20',
-          icon: <Clock size={small ? 10 : 12} />
-        };
-      case 'Premium':
-      case 'SRK Grow':
-        return { 
-          bg: 'bg-purple-500/10', 
-          text: 'text-purple-400', 
-          border: 'border-purple-500/20',
-          icon: <Crown size={small ? 10 : 12} />
-        };
-      default:
-        return { 
-          bg: 'bg-zinc-500/10', 
-          text: 'text-zinc-400', 
-          border: 'border-zinc-500/20',
-          icon: <Info size={small ? 10 : 12} />
-        };
+            {/* Mobile Sidebar Content */}
+            <div className="space-y-4">
+              {/* Balance Display */}
+              <GlassCard small>
+                <div className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Coins size={20} className="from-[#ac9976] to-[#e1ba73]" />
+                    <div>
+                      <p className="text-sm text-zinc-400">Your Balance</p>
+                      <p className="text-xl font-bold text-white">{balance.toLocaleString()} Coins</p>
+                      <p className="text-xs text-zinc-500">Eligible: {eligible} Coins</p>
+                    </div>
+                  </div>
+                </div>
+              </GlassCard>
+
+              {/* Navigation */}
+              <div className="space-y-2">
+                {[
+                  { view: 'verification', icon: Shield, label: 'Verification', badge: !isApproved ? 1 : undefined },
+                  { view: 'analytics', icon: BarChart3, label: 'Analytics', requiresApproval: true },
+                  { view: 'tasks', icon: ListChecks, label: 'Tasks', badge: rejectedTasks.length },
+                  { view: 'leaderboard', icon: Trophy, label: 'Leaderboard' },
+                  { view: 'coinExchange', icon: DollarSign, label: 'Coin Exchange' },
+                  { view: 'profile', icon: UserCircle, label: 'Profile' },
+                  { view: 'payout', icon: Wallet, label: 'Legacy Payout' },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isDisabled = item.requiresApproval && !isApproved;
+                  const isActive = dashView === item.view;
+                  
+                  return (
+                    <button
+                      key={item.view}
+                      onClick={() => {
+                        if (!isDisabled) {
+                        
+                          setIsMenuOpen(false);
+                        }
+                      }}
+                      className={`
+                        w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+                        ${isActive 
+                          ? 'bg-linear-to-r from-[#b68938]/20 to-[#b68938]/10 text-white border border-white/10' 
+                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                        }
+                        ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                      disabled={isDisabled}
+                    >
+                      <Icon size={20} className={isActive ? 'from-[#ac9976] to-[#e1ba73]' : ''} />
+                      <span className="font-medium">{item.label}</span>
+                      {item.badge && (
+                        <span className="ml-auto px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                          {item.badge}
+                        </span>
+                      )}
+                      {isDisabled && <Lock size={16} className="ml-auto text-zinc-500" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Logout Button */}
+              <button
+                onClick={() => {
+                  setView('landing');
+                  setIsMenuOpen(false);
+                  addNotification('Logged out successfully', 'info');
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all mt-8"
+              >
+                <LogOut size={20} />
+                <span className="font-medium">Logout</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </>
+);
+  // Add notification
+  const addNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  // Complete a task
+  const completeTask = (taskId: string) => {
+    setActiveTasks(prev => 
+      prev.map(task => 
+        task.id === taskId ? { ...task, status: 'completed' as TaskStatus } : task
+      )
+    );
+    setCompleted(prev => [...prev, taskId]);
+    
+    const task = activeTasks.find(t => t.id === taskId);
+    if (task) {
+      setBalance(prev => prev + task.coins);
+      setEligible(prev => prev + task.coins);
+      addNotification(`Task completed! +${task.coins} Coins earned!`, 'success');
     }
   };
 
-  const config = getConfig();
-  
-  return (
-    <motion.span
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ 
-        opacity: 1, 
-        scale: 1,
-        boxShadow: pulse ? '0 0 0 0 rgba(59, 130, 246, 0.7)' : 'none'
-      }}
-      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border} backdrop-blur-sm ${small ? 'px-2 py-0.5 text-xs' : ''}`}
-    >
-      {config.icon}
-      {status}
-    </motion.span>
-  );
-};
+  // Handle verification success
+  const handleVerificationSuccess = () => {
+    setIsApproved(true);
+    setDashView('tasks');
+    addNotification('Verification submitted successfully! You can now access all features.', 'success');
+  };
 
+  // --- LANDING VIEW ---
+  const LandingView = () => (
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      <AnimatedBackground />
+      
+      <div className="relative z-10 text-center px-6 max-w-6xl">
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="mb-12"
+        >
+          <h1 className="text-7xl md:text-8xl font-black tracking-tighter mb-6">
+            <span className="bg-linear-to-r from-[#ac9976] to-[#e1ba73] bg-clip-text text-transparent animate-gradient">
+              <GradientText>
+
+              EARN THROUGH TASKS
+              </GradientText>
+            </span>
+          </h1>
+          <p className="text-xl md:text-2xl text-zinc-300 max-w-3xl mx-auto mb-8 leading-relaxed">
+            Transform your social engagement into real rewards. Complete verified tasks, earn coins, and unlock premium features.
+          </p>
+          
+          {/* Animated stats */}
+          <div className="flex justify-center gap-8 mb-12">
+            {[
+              { value: '10K+', label: 'Active Users' },
+              { value: '500K+', label: 'Coins Earned' },
+              { value: '98%', label: 'Success Rate' },
+              { value: '24/7', label: 'Support' },
+            ].map((stat, idx) => (
+              <motion.div
+                key={stat.label}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 + idx * 0.1 }}
+                className="text-center"
+              >
+                <div className="text-3xl font-bold from-[#ac9976] to-[#e1ba73]">{stat.value}</div>
+                <div className="text-sm text-zinc-500">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mb-16"
+        >
+          <MagneticButton 
+            onClick={() => {
+              setView('dashboard');
+              addNotification('Welcome to SRK Portal!', 'success');
+            }} 
+            className="text-lg relative"
+          >
+            <span className="flex items-center justify-center gap-3">
+              <Sparkles size={24} />
+              Join Now & Start Earning
+              <ArrowRight size={24} />
+            </span>
+            
+            {/* Floating coins animation */}
+            <motion.div
+              className="absolute -top-4 -right-4"
+              animate={{
+                y: [0, -10, 0],
+                rotate: [0, 360],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            >
+              <Coins size={20} className="from-[#ac9976] to-[#e1ba73]" />
+            </motion.div>
+          </MagneticButton>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          {[
+            { icon: <Zap size={32} />, title: 'Instant Rewards', desc: 'Get coins immediately after task completion', color: 'from-amber-500/20 to-yellow-500/20' },
+            { icon: <Shield size={32} />, title: 'Verified Tasks', desc: 'All tasks are verified for authenticity', color: 'from-blue-500/20 to-cyan-500/20' },
+            { icon: <TrendingUp size={32} />, title: 'Growth Opportunities', desc: 'Unlock higher rewards with SRK Grow', color: 'from-purple-500/20 to-pink-500/20' },
+          ].map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+              whileHover={{ y: -5 }}
+            >
+              <GlassCard hover gradient={index === 0 ? 'gold' : index === 1 ? 'blue' : 'purple'}>
+                <div className="p-6">
+                  <div className={`w-14 h-14 rounded-2xl bg-div-to-br ${feature.color} flex items-center justify-center mb-4`}>
+                    <div className="from-[#ac9976] to-[#e1ba73]">{feature.icon}</div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                  <p className="text-zinc-400">{feature.desc}</p>
+                </div>
+              </GlassCard>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Floating animated elements */}
+        <motion.div
+          animate={{
+            y: [0, -20, 0],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute top-1/4 left-10 opacity-20"
+        >
+          <Coins size={40} className="from-[#ac9976] to-[#e1ba73]" />
+        </motion.div>
+        <motion.div
+          animate={{
+            y: [0, 20, 0],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
+          }}
+          className="absolute bottom-1/4 right-10 opacity-20"
+        >
+          <Trophy size={40} className="text-purple-400" />
+        </motion.div>
+      </div>
+    </div>
+  );
 
   // --- SIDEBAR COMPONENT ---
   const Sidebar = () => {
@@ -2355,13 +1880,13 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
     ];
 
     return (
-      <aside className="w-full lg:w-64 flex-shrink-0">
+      <aside className="w-full lg:w-64 shrink">
         <GlassCard className="h-full p-6">
           <div className="flex items-center gap-3 mb-8">
             <motion.div
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.6 }}
-              className="w-12 h-12 rounded-full bg-gradient-to-r from-[#b68938] to-[#e1ba73] flex items-center justify-center"
+              className="w-12 h-12 rounded-full bg-div-to-r from-[#b68938] to-[#e1ba73] flex items-center justify-center"
             >
               <span className="font-bold text-black text-xl">S</span>
             </motion.div>
@@ -2393,7 +1918,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   className={`
                     w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative
                     ${isActive 
-                      ? 'bg-gradient-to-r from-[#b68938]/20 to-[#b68938]/10 text-white border border-white/10' 
+                      ? 'bg-linear-to-r from-[#b68938]/20 to-[#b68938]/10 text-white border border-white/10' 
                       : 'text-zinc-400 hover:text-white hover:bg-white/5'
                     }
                     ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -2401,7 +1926,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   `}
                   disabled={isDisabled}
                 >
-                  <Icon size={18} className={isActive ? 'text-amber-400' : ''} />
+                  <Icon size={18} className={isActive ? 'from-[#ac9976] to-[#e1ba73]' : ''} />
                   <span className="text-sm font-medium">{item.label}</span>
                   
                   {item.badge && (
@@ -2427,7 +1952,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
           </nav>
 
           {/* Balance display */}
-          <div className="mt-8 p-4 bg-gradient-to-r from-[#b68938]/10 to-[#e1ba73]/10 rounded-xl border border-white/10">
+          <div className="mt-8 p-4 bg-linear-to-r from-[#b68938]/10 to-[#e1ba73]/10 rounded-xl border border-white/10">
             <p className="text-xs text-zinc-400 mb-1">Your Balance</p>
             <div className="flex items-center gap-2">
               <Coins size={16} className="text-amber-400" />
@@ -2458,7 +1983,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
               <div className="flex items-center gap-3">
                 <motion.div
                   whileHover={{ rotate: 15 }}
-                  className="w-12 h-12 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center"
+                  className="w-12 h-12 rounded-xl bg-linear-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center"
                 >
                   <ShieldCheck size={24} className="text-amber-400" />
                 </motion.div>
@@ -2499,7 +2024,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
         {isApproved && (
           <GlassCard hover gradient="purple" className="relative overflow-hidden">
             {/* Animated background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5" />
+            <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 via-transparent to-pink-500/5" />
             
             <div className="p-8 relative z-10">
               <div className="flex items-center justify-between mb-6">
@@ -2507,7 +2032,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   <motion.div
                     animate={{ rotate: [0, 360] }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center"
+                    className="w-12 h-12 rounded-xl bg-linear-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center"
                   >
                     <Crown size={24} className="text-purple-400" />
                   </motion.div>
@@ -2595,7 +2120,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
               </div>
               <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
                 <motion.div 
-                  className="h-full bg-gradient-to-r from-amber-500 to-yellow-500"
+                  className="h-full bg-div-to-r from-amber-500 to-yellow-500"
                   initial={{ width: '0%' }}
                   animate={{ width: isApproved ? '50%' : '0%' }}
                   transition={{ duration: 1 }}
@@ -2608,7 +2133,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
               </div>
               <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden">
                 <motion.div 
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                  className="h-full bg-div-to-r from-purple-500 to-pink-500"
                   initial={{ width: '0%' }}
                   animate={{ width: hasPurchased ? '100%' : isApproved ? '50%' : '0%' }}
                   transition={{ duration: 1, delay: 0.5 }}
@@ -2631,7 +2156,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <motion.div 
-              className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center"
+              className="w-12 h-12 rounded-xl bg-div-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center"
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.6 }}
             >
@@ -2670,7 +2195,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                 onClick={() => setTimeRange(range)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   timeRange === range
-                    ? 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-white'
+                    ? 'bg-div-to-r from-amber-500/20 to-yellow-500/20 text-white'
                     : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -2717,12 +2242,12 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                     onMouseLeave={() => setHoveredBar(null)}
                   >
                     <div 
-                      className={`w-full bg-gradient-to-t from-amber-500 to-yellow-500 rounded-t-lg transition-all duration-300 ${
+                      className={`w-full bg-div-to-t from-amber-500 to-yellow-500 rounded-t-lg transition-all duration-300 ${
                         hoveredBar === index ? 'opacity-100' : 'opacity-80'
                       }`}
                       style={{ height: `${value}%` }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-div-to-b from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     
                     {/* Tooltip on hover */}
@@ -2793,7 +2318,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                       transition={{ delay: index * 0.1 }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-div-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center">
                           <Calendar size={14} className="text-amber-400" />
                         </div>
                         <span className="text-zinc-400">{day.date}</span>
@@ -2811,7 +2336,175 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
   };
 
   // --- TASKS VIEW ---
- 
+  const TasksView = () => {
+    const [showVideoFeature, setShowVideoFeature] = useState(false);
+
+    if (!isApproved) {
+      return (
+        <GlassCard className="p-12 text-center">
+          <Shield size={48} className="text-yellow-400 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-white mb-3">Verification Required</h3>
+          <p className="text-zinc-400 mb-8">Complete identity verification to access tasks</p>
+          <MagneticButton onClick={() => setDashView('verification')}>
+            Go to Verification
+          </MagneticButton>
+        </GlassCard>
+      );
+    }
+
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-4xl font-bold text-white mb-2">
+            <GradientText>Earning Tasks</GradientText>
+          </h1>
+          <p className="text-zinc-400">Complete tasks to earn coins. Click on any category to view available tasks.</p>
+        </div>
+
+        {/* Video Feature Toggle */}
+        <div className="flex justify-end">
+
+        </div>
+
+        {/* Video Feature Section */}
+        {showVideoFeature && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+          </motion.div>
+        )}
+
+        {/* Task Categories */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { type: 'follow' as TaskType, icon: Users, label: 'Follow Tasks', color: 'from-emerald-500/20 to-green-500/20', count: followTasks.length },
+            { type: 'watch' as TaskType, icon: Play, label: 'Watch Tasks', color: 'from-blue-500/20 to-cyan-500/20', count: watchTasks.length },
+            { type: 'post' as TaskType, icon: Share2, label: 'Post Tasks', color: 'from-purple-500/20 to-pink-500/20', count: postTasks.length },
+          ].map((category) => {
+            const Icon = category.icon;
+            return (
+              <GlassCard 
+                key={category.type}
+                hover 
+                gradient={category.type === 'follow' ? 'green' : category.type === 'watch' ? 'blue' : 'purple'}
+                onClick={() => setTaskCategory(category.type)}
+                className="cursor-pointer"
+              >
+                <div className="p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className={`w-16 h-16 rounded-2xl bg-div-to-br ${category.color} flex items-center justify-center`}>
+                      <Icon size={28} className={
+                        category.type === 'follow' ? 'text-emerald-400' : 
+                        category.type === 'watch' ? 'text-blue-400' : 
+                        'text-purple-400'
+                      } />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{category.label}</h3>
+                      <p className="text-zinc-400">{category.count} available tasks</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Coins size={20} className="text-amber-400" />
+                      <span className="text-lg font-bold text-amber-400">
+                        {category.type === 'follow' ? '150+' : 
+                         category.type === 'watch' ? '200+' : 
+                         '120+'} Coins
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-sm text-zinc-400">
+                      <span>Click to view</span>
+                      <ChevronRight size={16} />
+                    </div>
+                  </div>
+                </div>
+              </GlassCard>
+            );
+          })}
+        </div>
+
+        {/* Rejected Tasks Section */}
+        {rejectedTasks.length > 0 && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-bold text-white">Rejected Tasks</h3>
+                <p className="text-zinc-400">Review and retry these tasks</p>
+              </div>
+              <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
+                {rejectedTasks.length} tasks need attention
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {rejectedTasks.slice(0, 3).map((task) => {
+                const platformInfo = allPlatforms.find(p => p.platform === task.platform);
+                return (
+                  <GlassCard key={task.id} hover>
+                    <div className="p-6">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div className="flex items-start gap-4">
+                          <div className={`w-12 h-12 rounded-xl bg-div-to-br ${platformInfo?.gradient} flex items-center justify-center shrink`}>
+                            {platformInfo?.icon && React.createElement(platformInfo.icon, { 
+                              size: 20, 
+                              className: platformInfo.color 
+                            })}
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-bold text-white mb-2">{task.title}</h4>
+                            <p className="text-sm text-zinc-400 mb-2">{task.desc}</p>
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle size={14} className="text-red-400" />
+                              <p className="text-sm text-red-400">{task.rejectionReason}</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <Coins size={20} className="text-amber-400" />
+                            <span className="text-xl font-bold text-amber-400">+{task.coins}</span>
+                          </div>
+                          
+                          <MagneticButton 
+                            small 
+                            onClick={() => setReviewingRejectedTask(task)}
+                            className="!px-6"
+                          >
+                            <RefreshCw size={16} />
+                            Review
+                          </MagneticButton>
+                        </div>
+                      </div>
+                    </div>
+                  </GlassCard>
+                );
+              })}
+              
+              {rejectedTasks.length > 3 && (
+                <div className="text-center">
+                  <button 
+                    onClick={() => setDashView('tasks')}
+                    className="text-amber-400 hover:text-amber-300 transition-colors"
+                  >
+                    View all {rejectedTasks.length} rejected tasks →
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Active Tasks */}
+
+      </div>
+    );
+  };
 
   // --- TASK MODALS ---
   const PlatformSelectorModal = ({ type, onClose }: any) => (
@@ -2892,7 +2585,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
 
           <div className="text-center mt-4 mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${platformInfo?.gradient} flex items-center justify-center`}>
+              <div className={`w-16 h-16 rounded-2xl bg-div-to-br ${platformInfo?.gradient} flex items-center justify-center`}>
                 {Icon && React.createElement(Icon, { size: 28, className: platformInfo?.color })}
               </div>
               <div>
@@ -2914,7 +2607,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-start gap-4">
                       {task.type === 'watch' ? (
-                        <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                        <div className="relative w-32 h-20 rounded-lg overflow-hidden shrink">
                           <img
                             src={`https://img.youtube.com/vi/${task.embedId || 'dQw4w9WgXcQ'}/hqdefault.jpg`}
                             alt={task.title}
@@ -2930,7 +2623,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                           )}
                         </div>
                       ) : (
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-div-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center shrink">
                           {task.type === 'follow' ? <Users size={20} className="text-amber-400" /> : <Share2 size={20} className="text-amber-400" />}
                         </div>
                       )}
@@ -2954,7 +2647,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                       <MagneticButton 
                         small 
                         onClick={() => handleTaskClick(task)}
-                        className="!px-6"
+                        className="px-6!"
                       >
                         {task.type === 'watch' ? 'Watch Video' : 'Start Task'}
                       </MagneticButton>
@@ -3026,7 +2719,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
           </button>
 
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full bg-div-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center mx-auto mb-4">
               <Upload size={28} className="text-amber-400" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Submit Proof</h2>
@@ -3037,7 +2730,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
             {/* Task Info */}
             <GlassCard className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${platformInfo?.gradient} flex items-center justify-center`}>
+                <div className={`w-12 h-12 rounded-xl bg-div-to-br ${platformInfo?.gradient} flex items-center justify-center`}>
                   {platformInfo?.icon && React.createElement(platformInfo.icon, { 
                     size: 20, 
                     className: platformInfo.color 
@@ -3113,8 +2806,8 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   <span>{uploadProgress}%</span>
                 </div>
                 <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <motion.div 
-                    className="h-full bg-gradient-to-r from-amber-500 to-yellow-500"
+                  <motion.div
+                    className="h-full bg-div-to-r from-amber-500 to-yellow-500"
                     initial={{ width: '0%' }}
                     animate={{ width: `${uploadProgress}%` }}
                     transition={{ duration: 0.3 }}
@@ -3148,173 +2841,560 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
   };
 
   // Video Player Modal
-  const VideoPlayerModal = ({ task, onClose }: any) => {
-    const [progress, setProgress] = useState(0);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isComplete, setIsComplete] = useState(false);
-    const videoRef = useRef<HTMLVideoElement>(null);
+// Video Player Modal with Request Task Feature
+// Video Player Modal with Request Task Feature
+// Video Player Modal with Timestamp Submission
+// Video Player Modal with Timestamp Submission
+const VideoPlayerModal = ({ task, onClose }: any) => {
+  const [progress, setProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [showTimestampModal, setShowTimestampModal] = useState(false);
+  const [watchTime, setWatchTime] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(0);
+  const [player, setPlayer] = useState<any>(null);
+  const [selectedTimestamps, setSelectedTimestamps] = useState<number[]>([]);
+  const progressInterval = useRef<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-    useEffect(() => {
-      if (isComplete) return;
-      
-      const interval = setInterval(() => {
-        if (isPlaying && progress < 100) {
-          setProgress(prev => {
-            const newProgress = Math.min(prev + 0.5, 100);
-            if (newProgress === 100) {
-              setIsComplete(true);
-              addNotification('Video watched completely!', 'success');
-            }
-            return newProgress;
-          });
+  // YouTube API initialization
+  useEffect(() => {
+    if (task.platform === 'youtube' && task.embedId) {
+      // Load YouTube IFrame API if not already loaded
+      if (!window.YT) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      }
+
+      // Function to initialize player once API is ready
+
+
+      // If API is already loaded, create player immediately
+      if (window.YT && window.YT.Player) {
+        console.log('YT API already loaded, creating player...');
+        window.onYouTubeIframeAPIReady();
+      }
+    }
+
+    return () => {
+      stopProgressTracking();
+      if (player) {
+        try {
+          player.destroy();
+        } catch (error) {
+          console.error('Error destroying player:', error);
         }
-      }, 100);
-
-      return () => clearInterval(interval);
-    }, [isPlaying, progress, isComplete]);
-
-    const handlePlay = () => {
-      setIsPlaying(true);
-      if (videoRef.current) {
-        videoRef.current.play();
       }
     };
+  }, []);
 
-    const handlePause = () => {
-      setIsPlaying(false);
-      if (videoRef.current) {
-        videoRef.current.pause();
-      }
-    };
+  const startProgressTracking = () => {
+    console.log('Starting progress tracking...');
+    
+    // Clear any existing interval
+    stopProgressTracking();
 
-    const handleComplete = () => {
-      setIsComplete(true);
-      completeTask(task.id);
-    };
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/95 backdrop-blur-sm">
-        <GlassCard className="w-full max-w-4xl p-8 relative">
-          <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-lg z-10">
-            <X size={20} />
-          </button>
-
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">{task.title}</h2>
-            <p className="text-zinc-400">{task.desc}</p>
-          </div>
-
-          {/* Video Player */}
-          <div className="aspect-video bg-zinc-900 rounded-xl mb-6 overflow-hidden relative">
-            {task.platform === 'youtube' && task.embedId ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${task.embedId}?autoplay=1&controls=1`}
-                className="w-full h-full"
-                allow="autoplay; encrypted-media"
-                title={task.title}
-                allowFullScreen
-              />
-            ) : (
-              <div className="relative w-full h-full">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  onPlay={handlePlay}
-                  onPause={handlePause}
-                  onEnded={() => setIsComplete(true)}
-                  controls
-                >
-                  <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-                </video>
-                
-                {/* Custom overlay */}
-                {!isPlaying && !isComplete && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <button
-                      onClick={handlePlay}
-                      className="w-20 h-20 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 flex items-center justify-center hover:scale-110 transition-transform"
-                    >
-                      <Play size={32} className="text-white ml-2" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Progress and Controls */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-zinc-400">Progress</span>
-              <span className="text-2xl font-bold text-amber-400">{Math.round(progress)}%</span>
-            </div>
+    progressInterval.current = setInterval(() => {
+      try {
+        if (task.platform === 'youtube' && player) {
+          const currentTime = player.getCurrentTime();
+          const duration = player.getDuration();
+          
+          if (duration > 0) {
+            const progressPercent = (currentTime / duration) * 100;
+            console.log('YouTube progress:', currentTime, '/', duration, '=', progressPercent + '%');
             
-            <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-gradient-to-r from-amber-500 to-yellow-500"
-                initial={{ width: '0%' }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
+            setProgress(progressPercent);
+            setWatchTime(Math.floor(currentTime));
 
-            {/* Control buttons */}
-            <div className="flex gap-4">
-              <button
-                onClick={isPlaying ? handlePause : handlePlay}
-                className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                  isPlaying 
-                    ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' 
-                    : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                }`}
-              >
-                {isPlaying ? 'Pause' : 'Play'} Video
-              </button>
+            if (progressPercent >= 100) {
+              setIsComplete(true);
+              setProgress(100);
+              stopProgressTracking();
+            }
+          }
+        } else if (task.platform !== 'youtube' && videoRef.current) {
+          const video = videoRef.current;
+          const currentTime = video.currentTime;
+          const duration = video.duration;
+          
+          if (duration > 0) {
+            const progressPercent = (currentTime / duration) * 100;
+            console.log('HTML5 video progress:', currentTime, '/', duration, '=', progressPercent + '%');
+            
+            setProgress(progressPercent);
+            setWatchTime(Math.floor(currentTime));
 
-              <div className="flex-1" />
-
-              {isComplete ? (
-                <MagneticButton 
-                  onClick={() => {
-                    onClose();
-                    setVerifyingTask(task);
-                  }}
-                  className="!px-8"
-                >
-                  <span className="flex items-center gap-2">
-                    <Camera size={16} />
-                    Submit Screenshot
-                  </span>
-                </MagneticButton>
-              ) : (
-                <MagneticButton 
-                  onClick={handleComplete}
-                  disabled={!isComplete}
-                  className="!px-8"
-                >
-                  {isComplete ? 'Complete' : 'Watch to Complete'}
-                </MagneticButton>
-              )}
-            </div>
-
-            {isComplete && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center gap-3"
-              >
-                <CheckCircle size={20} className="text-emerald-400" />
-                <span className="text-sm text-emerald-300">
-                  Video watched completely! You earned +{task.coins} Coins
-                </span>
-              </motion.div>
-            )}
-          </div>
-        </GlassCard>
-      </div>
-    );
+            if (progressPercent >= 100) {
+              setIsComplete(true);
+              setProgress(100);
+              stopProgressTracking();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error in progress tracking:', error);
+        stopProgressTracking();
+      }
+    }, 500); // Update every 500ms for smoother progress
   };
 
+  const stopProgressTracking = () => {
+    console.log('Stopping progress tracking...');
+    if (progressInterval.current) {
+      clearInterval(progressInterval.current);
+      progressInterval.current = null;
+    }
+  };
+
+  const handlePlay = () => {
+    console.log('Play button clicked');
+    if (task.platform === 'youtube' && player) {
+      player.playVideo();
+      setIsPlaying(true);
+    } else if (task.platform !== 'youtube' && videoRef.current) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handlePause = () => {
+    console.log('Pause button clicked');
+    if (task.platform === 'youtube' && player) {
+      player.pauseVideo();
+      setIsPlaying(false);
+    } else if (task.platform !== 'youtube' && videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const handleSendTimestamps = () => {
+    console.log('Send timestamps clicked');
+    setShowTimestampModal(true);
+  };
+
+  const handleSubmitTimestamps = () => {
+    // Calculate video length and create timestamp report
+    const reportData = {
+      taskId: task.id,
+      taskTitle: task.title,
+      platform: task.platform,
+      videoLength: totalDuration,
+      progressPercentage: progress,
+      selectedTimestamps: selectedTimestamps,
+      totalDuration: totalDuration,
+      watchTime: watchTime,
+      submittedAt: new Date().toISOString()
+    };
+
+    console.log('Submitting timestamps to admin:', reportData);
+    
+    // Show success notification
+    addNotification('Timestamps sent to admin successfully! Request submitted.', 'success');
+    
+    // Close modal and complete task
+    setShowTimestampModal(false);
+    completeTask(task.id);
+    setTimeout(() => {
+      onClose();
+    }, 2000);
+  };
+
+  const toggleTimestamp = (timestamp: number) => {
+    setSelectedTimestamps(prev => {
+      if (prev.includes(timestamp)) {
+        return prev.filter(t => t !== timestamp);
+      } else {
+        return [...prev, timestamp];
+      }
+    });
+  };
+
+  // Generate timestamp options based on video length
+  const generateTimestamps = () => {
+    if (totalDuration === 0) return [];
+    
+    const timestamps = [];
+    const interval = Math.ceil(totalDuration / 10); // Divide video into 10 parts
+    
+    for (let i = interval; i < totalDuration; i += interval) {
+      timestamps.push(Math.min(i, totalDuration - 1));
+    }
+    
+    return timestamps.slice(0, 8); // Return max 8 timestamps
+  };
+
+  // Handle HTML5 video events
+  const handleVideoPlay = () => {
+    console.log('HTML5 video playing');
+    setIsPlaying(true);
+    startProgressTracking();
+  };
+
+  const handleVideoPause = () => {
+    console.log('HTML5 video paused');
+    setIsPlaying(false);
+    stopProgressTracking();
+  };
+
+  const handleVideoEnded = () => {
+    console.log('HTML5 video ended');
+    setIsPlaying(false);
+    setIsComplete(true);
+    setProgress(100);
+    stopProgressTracking();
+  };
+
+  const handleVideoLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.target as HTMLVideoElement;
+    console.log('HTML5 video metadata loaded:', video.duration);
+    setTotalDuration(video.duration);
+  };
+
+  const handleVideoTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.target as HTMLVideoElement;
+    if (video.duration > 0) {
+      const progressPercent = (video.currentTime / video.duration) * 100;
+      setProgress(progressPercent);
+      setWatchTime(Math.floor(video.currentTime));
+    }
+  };
+
+  // Timestamp Modal Component
+  const TimestampModal = () => (
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-6 bg-black/95 backdrop-blur-sm">
+      <GlassCard className="w-full max-w-md p-8 relative">
+        <button onClick={() => setShowTimestampModal(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-lg">
+          <X size={20} />
+        </button>
+
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-full bg-div-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center mx-auto mb-4">
+            <Clock size={28} className="text-amber-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Submit Timestamps</h2>
+          <p className="text-zinc-400">Select timestamps from the video</p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Video Summary */}
+          <GlassCard className="p-6">
+            <h4 className="font-bold text-white mb-4">Video Summary</h4>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Video Length:</span>
+                <span className="text-white font-medium">{formatTime(totalDuration)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Watched:</span>
+                <span className="text-white font-medium">{formatTime(watchTime)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Completion:</span>
+                <span className="text-amber-400 font-bold">{progress.toFixed(1)}%</span>
+              </div>
+            </div>
+          </GlassCard>
+
+          {/* Timestamp Selection */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-400 mb-4">
+              Select timestamps to submit (optional):
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {generateTimestamps().map((timestamp, index) => (
+                <button
+                  key={index}
+                  onClick={() => toggleTimestamp(timestamp)}
+                  className={`p-3 rounded-xl border-2 transition-all ${
+                    selectedTimestamps.includes(timestamp)
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+                      : 'border-white/10 bg-white/5 hover:border-white/20'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-lg font-bold">{formatTime(timestamp)}</div>
+                    <div className="text-xs text-zinc-400 mt-1">
+                      {Math.round((timestamp / totalDuration) * 100)}%
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-500 mt-3 text-center">
+              Selected: {selectedTimestamps.length} timestamps
+            </p>
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button
+              onClick={() => setShowTimestampModal(false)}
+              className="flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <MagneticButton 
+              onClick={handleSubmitTimestamps}
+              className="flex-1"
+            >
+              <Send size={16} />
+              Send Timestamps
+            </MagneticButton>
+          </div>
+
+          {/* Admin Info */}
+          <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+            <div className="flex items-center gap-3 mb-2">
+              <ShieldCheck size={16} className="text-blue-400" />
+              <span className="text-sm font-medium text-blue-400">Admin Review</span>
+            </div>
+            <p className="text-xs text-zinc-400">
+              Your timestamps will be reviewed by admin. If approved, you'll receive your {task.coins} coins.
+            </p>
+          </div>
+        </div>
+      </GlassCard>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/95 backdrop-blur-sm">
+      <GlassCard className="w-full max-w-4xl p-8 relative">
+        <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-lg z-10">
+          <X size={20} />
+        </button>
+
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            {task.platform === 'youtube' && <Youtube size={24} className="text-red-600" />}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">{task.title}</h2>
+              <p className="text-zinc-400">{task.desc}</p>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <Coins size={20} className="text-amber-400" />
+              <span className="text-xl font-bold text-amber-400">+{task.coins}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Video Player */}
+        <div className="aspect-video bg-black rounded-xl mb-6 overflow-hidden relative">
+          {task.platform === 'youtube' ? (
+            <div 
+              id="youtube-player" 
+              className="w-full h-full"
+              style={{ minHeight: '400px' }}
+            />
+          ) : (
+            <div className="relative w-full h-full">
+              <video
+                ref={videoRef}
+                id="html5-video-player"
+                className="w-full h-full object-cover"
+                controls={false}
+                onPlay={handleVideoPlay}
+                onPause={handleVideoPause}
+                onEnded={handleVideoEnded}
+                onLoadedMetadata={handleVideoLoadedMetadata}
+                onTimeUpdate={handleVideoTimeUpdate}
+              >
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              
+              {/* Custom play button overlay */}
+              {!isPlaying && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <button
+                    onClick={handlePlay}
+                    className="w-20 h-20 rounded-full bg-div-to-r from-amber-500 to-yellow-500 flex items-center justify-center hover:scale-110 transition-transform"
+                  >
+                    <Play size={32} className="text-white ml-2" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Custom controls overlay */}
+          <div className="absolute bottom-4 left-4 right-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={isPlaying ? handlePause : handlePlay}
+                className="w-12 h-12 rounded-full bg-div-to-r from-amber-500 to-yellow-500 flex items-center justify-center hover:scale-105 transition-transform"
+              >
+                {isPlaying ? (
+                  <Pause size={20} className="text-white" />
+                ) : (
+                  <Play size={20} className="text-white ml-1" />
+                )}
+              </button>
+              
+              <div className="flex-1">
+                <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                  <span>{formatTime(watchTime)}</span>
+                  <span>{formatTime(totalDuration)}</span>
+                </div>
+                <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-div-to-r from-amber-500 to-yellow-500 transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress and Controls */}
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <span className="text-zinc-400">Watch Progress</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-zinc-500">
+                    {formatTime(watchTime)} / {totalDuration > 0 ? formatTime(totalDuration) : '0:00'}
+                  </span>
+                </div>
+              </div>
+              <span className="text-2xl font-bold text-amber-400">{progress.toFixed(1)}%</span>
+            </div>
+            
+            <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-div-to-r from-amber-500 to-yellow-500 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+
+            <div className="flex justify-between text-xs text-zinc-500">
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
+            </div>
+          </div>
+
+          {/* Control buttons */}
+          <div className="flex gap-4">
+            <button
+              onClick={isPlaying ? handlePause : handlePlay}
+              disabled={task.platform === 'youtube' && !player}
+              className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
+                isPlaying 
+                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' 
+                  : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+              } ${task.platform === 'youtube' && !player ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isPlaying ? (
+                <>
+                  <Pause size={16} />
+                  Pause Video
+                </>
+              ) : (
+                <>
+                  <Play size={16} />
+                  Play Video
+                </>
+              )}
+            </button>
+
+            <div className="flex-1" />
+
+            {/* Send Timestamps Button - Only when video is 100% complete */}
+            {isComplete ? (
+              <MagneticButton 
+                onClick={handleSendTimestamps}
+                className="px-8!"
+              >
+                <span className="flex items-center gap-2">
+                  <Send size={16} />
+                  Send Timestamps
+                </span>
+              </MagneticButton>
+            ) : (
+              <button
+                disabled
+                className="px-6 py-3 bg-zinc-800 text-zinc-600 rounded-xl font-medium cursor-not-allowed"
+              >
+                Complete ({progress.toFixed(0)}%)
+              </button>
+            )}
+          </div>
+
+          {/* Status Messages */}
+          {progress > 0 && !isComplete && (
+            <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+              <div className="flex items-center gap-3">
+                <Clock size={20} className="text-amber-400" />
+                <div>
+                  <p className="text-sm text-amber-300 font-medium">Video in progress</p>
+                  <p className="text-xs text-zinc-400">
+                    Watch the video completely to earn {task.coins} coins. 
+                    {progress < 50 ? ' Keep watching!' : ' Almost there!'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isComplete && (
+            <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+              <div className="flex items-center gap-3">
+                <CheckCircle size={20} className="text-emerald-400" />
+                <div>
+                  <p className="text-sm text-emerald-300 font-medium">Video watched completely!</p>
+                  <p className="text-xs text-zinc-400">
+                    Click "Send Timestamps" to submit your watch report and claim {task.coins} coins.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Instructions */}
+          <div className="p-4 bg-white/5 rounded-xl">
+            <h4 className="font-medium text-white mb-2 flex items-center gap-2">
+              <Info size={16} className="text-blue-400" />
+              How to earn coins:
+            </h4>
+            <ul className="text-sm text-zinc-400 space-y-1">
+              <li className="flex items-center gap-2">
+                <Check size={12} className="text-green-400" />
+                Click "Play Video" button to start watching
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={12} className="text-green-400" />
+                Watch the video completely until progress reaches 100%
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={12} className="text-green-400" />
+                Once 100% complete, "Send Timestamps" button will appear
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={12} className="text-green-400" />
+                Click "Send Timestamps" to submit watch report and claim coins
+              </li>
+            </ul>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* Timestamp Modal */}
+      {showTimestampModal && <TimestampModal />}
+    </div>
+  );
+};
   // Rejected Task Review Modal
   const RejectedTaskReviewModal = ({ task, onClose }: any) => {
     const originalTask = activeTasks.find(t => t.id === task.taskId);
@@ -3343,7 +3423,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
           </button>
 
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-red-500/20 to-rose-500/20 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full bg-divt-to-r from-red-500/20 to-rose-500/20 flex items-center justify-center mx-auto mb-4">
               <AlertTriangle size={28} className="text-red-400" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Task Rejected</h2>
@@ -3354,7 +3434,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
             {/* Task Details */}
             <GlassCard className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${platformInfo?.gradient} flex items-center justify-center`}>
+                <div className={`w-12 h-12 rounded-xl bg-div-to-br ${platformInfo?.gradient} flex items-center justify-center`}>
                   {platformInfo?.icon && React.createElement(platformInfo.icon, { 
                     size: 20, 
                     className: platformInfo.color 
@@ -3471,7 +3551,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                       }}
                       className={`p-4 rounded-xl transition-all ${
                         selectedPlatform === p.platform
-                          ? 'bg-gradient-to-br ' + p.gradient
+                          ? 'bg-div-to-br ' + p.gradient
                           : 'bg-white/5 hover:bg-white/10'
                       }`}
                     >
@@ -3508,7 +3588,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                       }}
                       className={`p-6 rounded-xl transition-all ${
                         taskType === item.type
-                          ? 'bg-gradient-to-br from-amber-500/20 to-yellow-500/20'
+                          ? 'bg-div-to-br from-amber-500/20 to-yellow-500/20'
                           : 'bg-white/5 hover:bg-white/10'
                       }`}
                     >
@@ -3592,7 +3672,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
             {/* Progress bar */}
             <div className="w-full h-2 bg-zinc-800 rounded-full mt-4 overflow-hidden">
               <motion.div 
-                className="h-full bg-gradient-to-r from-amber-500 to-yellow-500"
+                className="h-full bg-div-to-r from-amber-500 to-yellow-500"
                 initial={{ width: '0%' }}
                 animate={{ width: `${(step / 3) * 100}%` }}
                 transition={{ duration: 0.3 }}
@@ -3644,7 +3724,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   onClick={() => setTimeRange(range)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     timeRange === range
-                      ? 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-white'
+                      ? 'bg-div-to-r from-amber-500/20 to-yellow-500/20 text-white'
                       : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10'
                   }`}
                 >
@@ -3667,9 +3747,9 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
             >
               {/* Rank Badge */}
               <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                index === 0 ? 'bg-gradient-to-r from-yellow-500 to-amber-500' :
-                index === 1 ? 'bg-gradient-to-r from-zinc-400 to-zinc-300' :
-                'bg-gradient-to-r from-amber-700 to-orange-600'
+                index === 0 ? 'bg-div-to-r from-yellow-500 to-amber-500' :
+                index === 1 ? 'bg-div-to-r from-zinc-400 to-zinc-300' :
+                'bg-div-to-r from-amber-700 to-orange-600'
               }`}>
                 <span className="text-2xl font-bold text-white">#{user.rank}</span>
               </div>
@@ -3692,9 +3772,9 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
               
               {/* User Info */}
               <div className={`text-center px-6 py-4 rounded-xl w-full ${
-                index === 0 ? 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20' :
-                index === 1 ? 'bg-gradient-to-r from-zinc-500/20 to-zinc-400/20' :
-                'bg-gradient-to-r from-amber-700/20 to-orange-700/20'
+                index === 0 ? 'bg-div-to-r from-yellow-500/20 to-amber-500/20' :
+                index === 1 ? 'bg-div-to-r from-zinc-500/20 to-zinc-400/20' :
+                'bg-div-to-r from-amber-700/20 to-orange-700/20'
               }`}>
                 <p className="font-bold text-white text-lg mb-1">{user.user}</p>
                 {user.isSelf && (
@@ -3743,7 +3823,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={`border-b border-white/5 last:border-0 hover:bg-white/5 ${
-                        user.isSelf ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10' : ''
+                        user.isSelf ? 'bg-div-to-r from-purple-500/10 to-pink-500/10' : ''
                       }`}
                     >
                       <td className="py-4 px-4">
@@ -3806,7 +3886,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20"
+                className="mt-6 p-4 bg-div-to-r from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -4019,7 +4099,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   </div>
                   <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-emerald-500 to-green-500"
+                      className="h-full bg-div-to-r from-emerald-500 to-green-500"
                       style={{ width: `${(eligible / balance) * 100}%` }}
                     />
                   </div>
@@ -4143,7 +4223,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                       alt={profile.name}
                       className="w-24 h-24 rounded-full border-4 border-white/10"
                     />
-                    <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 flex items-center justify-center">
+                    <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-div-to-r from-amber-500 to-yellow-500 flex items-center justify-center">
                       <span className="text-black font-bold">{profile.level}</span>
                     </div>
                   </motion.div>
@@ -4168,7 +4248,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   </div>
                   <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
                     <motion.div 
-                      className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                      className="h-full bg-div-to-r from-purple-500 to-pink-500"
                       initial={{ width: 0 }}
                       animate={{ width: `${(profile.xp / profile.nextLevelXP) * 100}%` }}
                       transition={{ duration: 1 }}
@@ -4213,7 +4293,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                     const Icon = p.icon;
                     return (
                       <div key={p.platform} className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${p.gradient} flex items-center justify-center flex-shrink-0`}>
+                        <div className={`w-12 h-12 rounded-xl bg-div-to-br ${p.gradient} flex items-center justify-center flex-shrink-0`}>
                           <Icon size={20} className={p.platform === 'tiktok' ? 'text-white' : p.color} />
                         </div>
                         <div className="flex-1">
@@ -4242,10 +4322,10 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
             {/* Custom Task Request (SRK Grow Only) */}
             {hasPurchased && (
               <GlassCard gradient="purple" className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-pink-500/10" />
+                <div className="absolute inset-0 bg-div-to-br from-purple-500/10 via-transparent to-pink-500/10" />
                 <div className="p-8 relative z-10">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-div-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center">
                       <Ticket size={24} className="text-purple-400" />
                     </div>
                     <div>
@@ -4326,7 +4406,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                     <div key={idx} className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         achievement.achieved 
-                          ? 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20' 
+                          ? 'bg-div-to-r from-amber-500/20 to-yellow-500/20' 
                           : 'bg-zinc-800/50'
                       }`}>
                         <achievement.icon size={18} className={
@@ -4392,7 +4472,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
       <GlassCard className="max-w-3xl">
         <div className="p-8">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-xl bg-div-to-r from-amber-500/20 to-yellow-500/20 flex items-center justify-center">
               <AlertTriangle size={28} className="text-amber-400" />
             </div>
             <div>
@@ -4407,7 +4487,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
               All payout functionality has been moved to the new system with improved rates and faster processing.
             </p>
             
-            <div className="p-4 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-xl border border-amber-500/20">
+            <div className="p-4 bg-div-to-r from-amber-500/10 to-yellow-500/10 rounded-xl border border-amber-500/20">
               <h4 className="font-bold text-amber-400 mb-2">Important Notice</h4>
               <ul className="text-sm text-zinc-300 space-y-1">
                 <li>• Legacy payouts will be discontinued on March 31, 2024</li>
@@ -4460,7 +4540,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   <motion.div
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.6 }}
-                    className="w-10 h-10 rounded-full bg-gradient-to-r from-[#b68938] to-[#e1ba73] flex items-center justify-center cursor-pointer"
+                    className="w-10 h-10 rounded-full bg-div-to-r from-[#b68938] to-[#e1ba73] flex items-center justify-center cursor-pointer"
                     onClick={() => setView('landing')}
                   >
                     <span className="font-bold text-black">S</span>
@@ -4490,14 +4570,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
                   </div>
                   
                   {/* Notification Bell */}
-                  <button className="p-2 hover:bg-white/10 rounded-lg relative">
-                    <Bell size={20} className="text-zinc-400" />
-                    {rejectedTasks.length > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                        {rejectedTasks.length}
-                      </span>
-                    )}
-                  </button>
+
                   
                   <MagneticButton small onClick={() => setDashView('coinExchange')}>
                     <Wallet size={16} />
@@ -4507,7 +4580,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
               </div>
             </div>
           </header>
-
+ <MobileMenu />
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="flex flex-col lg:flex-row gap-8">
               {/* Sidebar */}
@@ -4538,7 +4611,12 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
 
         {/* Modals */}
         <AnimatePresence>
-          {showVerification && <VerificationModal />}
+          {showVerification && (
+            <VerificationModal 
+              onClose={() => setShowVerification(false)} 
+              onSuccess={handleVerificationSuccess}
+            />
+          )}
           {taskCategory && !selectedPlatform && (
             <PlatformSelectorModal type={taskCategory} onClose={() => setTaskCategory(null)} />
           )}
@@ -4585,7 +4663,7 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      <style jsx global>{`
+ <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         
         * {
@@ -4659,11 +4737,11 @@ const StatusBadge: React.FC<{ status: string; small?: boolean; pulse?: boolean }
             font-size: 3.5rem;
           }
         }
-      `}</style>
+     `}} /> 
       
       {view === 'landing' ? <LandingView /> : <DashboardView />}
     </div>
   );
 };
 
-export default SRKPortal;
+export default AfterVerified;

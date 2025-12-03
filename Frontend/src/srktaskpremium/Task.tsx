@@ -1,17 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, useScroll, useTransform, useSpring, AnimatePresence, useMotionValueEvent } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { 
   Menu, X, ArrowRight, Sparkles, Users, Shield, Target, Coins, 
   TrendingUp, Wallet, Zap, CheckCircle, Star, Quote, ArrowUpRight, 
   ChevronRight, Bot, Fingerprint, ShieldCheck, Globe, BarChart3,
-  Clock, Globe as GlobeIcon, Award, Trophy, DollarSign, ShieldOff,
+  Clock, Award, Trophy, DollarSign,
   UserCheck, Smartphone, Wifi, Server, Package, Rocket,
-  Cpu, Activity, TrendingUp as TrendingUpIcon, Heart,
-  MessageSquare, ThumbsUp, Zap as ZapIcon, CreditCard,
-  BarChart as BarChartIcon, Users as UsersIcon, Target as TargetIcon,
-  Play, Pause
+  Cpu, Activity, Heart,
+  MessageSquare, ThumbsUp, CreditCard,
+  Play, Pause,
+  Shield as ShieldIcon,
+  Globe as GlobeIcon,
+  TrendingUp as TrendingUpIcon,
+  Users as UsersIcon,
+  Target as TargetIcon,
+  BarChart3 as BarChartIcon,
+  Zap as ZapIcon,
+  Wallet as WalletIcon
 } from 'lucide-react';
-
+import { Link } from 'react-router-dom';
 // ===== TYPE DEFINITIONS =====
 interface MagneticButtonProps {
   children: React.ReactNode;
@@ -172,10 +179,9 @@ const Navbar: React.FC = () => {
       <motion.nav
         initial="hidden"
         animate="visible"
-        variants={navbarAnimation}
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
           isScrolled 
-            ? 'bg-gradient-to-b from-black/95 via-[#0a0705]/95 to-black/95 backdrop-blur-xl py-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)]' 
+            ? 'bg-linear-to-b from-black/95 via-[#0a0705]/95 to-black/95 backdrop-blur-xl py-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)]' 
             : 'bg-transparent py-5'
         }`}
       >
@@ -263,7 +269,7 @@ const Navbar: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               className="hidden md:block px-8 py-3 rounded-full bg-gradient-to-r from-[#e1ba73] to-[#b68938] text-black font-bold text-sm uppercase tracking-widest relative overflow-hidden"
             >
-              <span className="relative z-10">START EARNING</span>
+              <Link to="/afterVerified" className="relative z-10">START EARNING</Link>
               <motion.div 
                 className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/20"
                 initial={{ x: '-100%' }}
@@ -286,7 +292,7 @@ const Navbar: React.FC = () => {
         <motion.div 
           className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#e1ba73] to-[#b68938]"
           style={{
-            scaleX: scrollY,
+            scaleX: scrollY.get(),
             transformOrigin: "0%"
           }}
         />
@@ -299,7 +305,7 @@ const Navbar: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-gradient-to-b from-black to-[#0a0705] md:hidden pt-32 px-8 flex flex-col gap-6"
+            className="fixed inset-0 z-40 bg-linear-to-b from-black to-[#0a0705] md:hidden pt-32 px-8 flex flex-col gap-6"
           >
             {['Features', 'Trust', 'Synergy', 'Reviews'].map((item, index) => (
               <motion.a 
@@ -319,7 +325,7 @@ const Navbar: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               whileTap={{ scale: 0.95 }}
-              className="w-full py-5 rounded-2xl font-bold text-lg mt-4 bg-gradient-to-r from-[#e1ba73] to-[#b68938] text-black shadow-[0_20px_60px_rgba(225,186,115,0.4)]"
+              className="w-full py-5 rounded-2xl font-bold text-lg mt-4 bg-linear-to-r from-[#e1ba73] to-[#b68938] text-black shadow-[0_20px_60px_rgba(225,186,115,0.4)]"
             >
               Start Earning
             </motion.button>
@@ -332,7 +338,14 @@ const Navbar: React.FC = () => {
 
 // ===== ENHANCED HERO SECTION =====
 const Hero: React.FC = () => {
-  const steps = [
+  interface Step {
+    title: string;
+    desc: string;
+    icon: React.ComponentType<any>;
+    delay: number;
+  }
+
+  const steps: Step[] = [
     { title: "CONNECT", desc: "Link SRK University Account", icon: Users, delay: 0.2 },
     { title: "VERIFY", desc: "Complete KYC Process", icon: Shield, delay: 0.4 },
     { title: "TASK", desc: "Follow & Engage", icon: Target, delay: 0.6 },
@@ -518,76 +531,79 @@ const Hero: React.FC = () => {
           />
           
           <div className="flex flex-col justify-between h-full py-8">
-            {steps.map((step, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, x: 100, rotateY: 90 }}
-                animate={{ opacity: 1, x: 0, rotateY: 0 }}
-                transition={{ duration: 0.8, delay: step.delay, type: "spring" }}
-                className="relative group pl-16"
-                onMouseEnter={() => setActiveStep(i)}
-              >
-                {/* Animated node */}
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-20 h-20 flex items-center justify-center">
-                  <motion.div 
-                    className="relative"
-                    animate={{ 
-                      scale: activeStep === i ? [1, 1.5, 1] : 1,
-                      boxShadow: activeStep === i 
-                        ? ['0 0 0 0 rgba(225, 186, 115, 0)', '0 0 30px 10px rgba(225, 186, 115, 0.5)', '0 0 0 0 rgba(225, 186, 115, 0)']
-                        : '0 0 15px rgba(225,186,115,0.5)'
-                    }}
-                    transition={{ 
-                      scale: { duration: 2, repeat: Infinity },
-                      boxShadow: { duration: 2, repeat: Infinity }
-                    }}
-                  >
-                    <div className="w-4 h-4 rounded-full bg-[#0a0705] border-2 border-[#e1ba73] z-10" />
-                  </motion.div>
-                  <div className="absolute w-8 h-[1px] bg-gradient-to-r from-[#b68938]/30 to-transparent right-1/2 top-1/2" />
-                </div>
-                
-                {/* Step Card */}
-                <SpotlightCard className="w-full max-w-md" hoverable={false}>
-                  <div className="p-6">
-                    <div className="flex items-center gap-5">
-                      <motion.div 
-                        className="p-3.5 rounded-xl bg-gradient-to-br from-[#b68938]/20 to-[#e1ba73]/10 text-[#e1ba73]"
-                        animate={{ 
-                          rotate: activeStep === i ? [0, 5, -5, 0] : 0,
-                          scale: activeStep === i ? [1, 1.1, 1] : 1
-                        }}
-                        transition={{ duration: 0.6 }}
-                      >
-                        <step.icon size={22} />
-                      </motion.div>
-                      <div>
-                        <motion.h4 
-                          className="text-white font-bold text-lg mb-1"
-                          animate={{ 
-                            color: activeStep === i ? '#e1ba73' : '#ffffff'
-                          }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {step.title}
-                        </motion.h4>
-                        <p className="text-sm text-gray-500 font-medium">{step.desc}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Progress bar */}
+            {steps.map((step, i) => {
+              const Icon = step.icon;
+              return (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, x: 100, rotateY: 90 }}
+                  animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                  transition={{ duration: 0.8, delay: step.delay, type: "spring" }}
+                  className="relative group pl-16"
+                  onMouseEnter={() => setActiveStep(i)}
+                >
+                  {/* Animated node */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-20 h-20 flex items-center justify-center">
                     <motion.div 
-                      className="mt-4 h-1 bg-white/5 rounded-full overflow-hidden"
-                      initial={{ width: 0 }}
-                      animate={{ width: activeStep === i ? "100%" : "0%" }}
-                      transition={{ duration: 2 }}
+                      className="relative"
+                      animate={{ 
+                        scale: activeStep === i ? [1, 1.5, 1] : 1,
+                        boxShadow: activeStep === i 
+                          ? ['0 0 0 0 rgba(225, 186, 115, 0)', '0 0 30px 10px rgba(225, 186, 115, 0.5)', '0 0 0 0 rgba(225, 186, 115, 0)']
+                          : '0 0 15px rgba(225,186,115,0.5)'
+                      }}
+                      transition={{ 
+                        scale: { duration: 2, repeat: Infinity },
+                        boxShadow: { duration: 2, repeat: Infinity }
+                      }}
                     >
-                      <div className="h-full bg-gradient-to-r from-[#e1ba73] to-[#b68938] rounded-full" />
+                      <div className="w-4 h-4 rounded-full bg-[#0a0705] border-2 border-[#e1ba73] z-10" />
                     </motion.div>
+                    <div className="absolute w-8 h-[1px] bg-gradient-to-r from-[#b68938]/30 to-transparent right-1/2 top-1/2" />
                   </div>
-                </SpotlightCard>
-              </motion.div>
-            ))}
+                  
+                  {/* Step Card */}
+                  <SpotlightCard className="w-full max-w-md" hoverable={false}>
+                    <div className="p-6">
+                      <div className="flex items-center gap-5">
+                        <motion.div 
+                          className="p-3.5 rounded-xl bg-gradient-to-br from-[#b68938]/20 to-[#e1ba73]/10 text-[#e1ba73]"
+                          animate={{ 
+                            rotate: activeStep === i ? [0, 5, -5, 0] : 0,
+                            scale: activeStep === i ? [1, 1.1, 1] : 1
+                          }}
+                          transition={{ duration: 0.6 }}
+                        >
+                          <Icon size={22} />
+                        </motion.div>
+                        <div>
+                          <motion.h4 
+                            className="text-white font-bold text-lg mb-1"
+                            animate={{ 
+                              color: activeStep === i ? '#e1ba73' : '#ffffff'
+                            }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {step.title}
+                          </motion.h4>
+                          <p className="text-sm text-gray-500 font-medium">{step.desc}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Progress bar */}
+                      <motion.div 
+                        className="mt-4 h-1 bg-white/5 rounded-full overflow-hidden"
+                        initial={{ width: 0 }}
+                        animate={{ width: activeStep === i ? "100%" : "0%" }}
+                        transition={{ duration: 2 }}
+                      >
+                        <div className="h-full bg-gradient-to-r from-[#e1ba73] to-[#b68938] rounded-full" />
+                      </motion.div>
+                    </div>
+                  </SpotlightCard>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -599,7 +615,15 @@ const Hero: React.FC = () => {
 const StatsBar: React.FC = () => {
   const [hoveredStat, setHoveredStat] = useState<number | null>(null);
   
-  const stats = [
+  interface Stat {
+    value: string;
+    label: string;
+    icon: React.ComponentType<any>;
+    description: string;
+    color: string;
+  }
+
+  const stats: Stat[] = [
     { 
       value: "500+", 
       label: "Active Tasks Available Now", 
@@ -647,76 +671,79 @@ const StatsBar: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true, margin: "-50px" }}
-              onMouseEnter={() => setHoveredStat(index)}
-              onMouseLeave={() => setHoveredStat(null)}
-              className="relative group"
-            >
-              {/* Popup info */}
-              <AnimatePresence>
-                {hoveredStat === index && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                    className="absolute -top-32 left-1/2 -translate-x-1/2 w-64 p-4 rounded-2xl backdrop-blur-xl border border-[#b68938]/30 bg-gradient-to-b from-[#0a0705]/90 to-black/90 z-20 shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
-                  >
-                    <div className="text-sm text-gray-300 font-medium text-center">
-                      {stat.description}
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                onMouseEnter={() => setHoveredStat(index)}
+                onMouseLeave={() => setHoveredStat(null)}
+                className="relative group"
+              >
+                {/* Popup info */}
+                <AnimatePresence>
+                  {hoveredStat === index && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                      className="absolute -top-32 left-1/2 -translate-x-1/2 w-64 p-4 rounded-2xl backdrop-blur-xl border border-[#b68938]/30 bg-gradient-to-b from-[#0a0705]/90 to-black/90 z-20 shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
+                    >
+                      <div className="text-sm text-gray-300 font-medium text-center">
+                        {stat.description}
+                      </div>
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0a0705] border-b border-r border-[#b68938]/30 rotate-45" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Stat Card */}
+                <SpotlightCard className="h-full">
+                  <div className="p-8 flex flex-col items-center text-center">
+                    <motion.div
+                      className="relative mb-6"
+                      animate={{ 
+                        rotate: hoveredStat === index ? 360 : 0,
+                        scale: hoveredStat === index ? 1.1 : 1
+                      }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#e1ba73]/20 to-[#b68938]/20 blur-xl rounded-full" />
+                      <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-black/80 to-[#1a1410] border border-white/5">
+                        <Icon className="w-7 h-7" style={{ color: stat.color }} />
+                      </div>
+                    </motion.div>
+
+                    <motion.div 
+                      className="text-5xl font-bold mb-3"
+                      animate={{
+                        color: hoveredStat === index ? stat.color : '#ffffff'
+                      }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {stat.value}
+                    </motion.div>
+
+                    <div className="text-sm text-gray-400 font-medium tracking-wider uppercase">
+                      {stat.label}
                     </div>
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0a0705] border-b border-r border-[#b68938]/30 rotate-45" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
-              {/* Stat Card */}
-              <SpotlightCard className="h-full">
-                <div className="p-8 flex flex-col items-center text-center">
-                  <motion.div
-                    className="relative mb-6"
-                    animate={{ 
-                      rotate: hoveredStat === index ? 360 : 0,
-                      scale: hoveredStat === index ? 1.1 : 1
-                    }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#e1ba73]/20 to-[#b68938]/20 blur-xl rounded-full" />
-                    <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-black/80 to-[#1a1410] border border-white/5">
-                      <stat.icon className="w-7 h-7" style={{ color: stat.color }} />
-                    </div>
-                  </motion.div>
-
-                  <motion.div 
-                    className="text-5xl font-bold mb-3"
-                    animate={{
-                      color: hoveredStat === index ? stat.color : '#ffffff'
-                    }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {stat.value}
-                  </motion.div>
-
-                  <div className="text-sm text-gray-400 font-medium tracking-wider uppercase">
-                    {stat.label}
+                    {/* Animated underline */}
+                    <motion.div 
+                      className="mt-6 h-[2px] bg-gradient-to-r from-transparent via-[#b68938] to-transparent"
+                      initial={{ width: 0 }}
+                      animate={{ width: hoveredStat === index ? "80%" : "40%" }}
+                      transition={{ duration: 0.4 }}
+                    />
                   </div>
-
-                  {/* Animated underline */}
-                  <motion.div 
-                    className="mt-6 h-[2px] bg-gradient-to-r from-transparent via-[#b68938] to-transparent"
-                    initial={{ width: 0 }}
-                    animate={{ width: hoveredStat === index ? "80%" : "40%" }}
-                    transition={{ duration: 0.4 }}
-                  />
-                </div>
-              </SpotlightCard>
-            </motion.div>
-          ))}
+                </SpotlightCard>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -727,7 +754,15 @@ const StatsBar: React.FC = () => {
 const TrustGrid: React.FC = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
-  const features = [
+  interface Feature {
+    icon: React.ComponentType<any>;
+    title: string;
+    desc: string;
+    gradient: string;
+    delay: number;
+  }
+
+  const features: Feature[] = [
     {
       icon: Bot,
       title: "Zero Bot Tolerance",
@@ -866,124 +901,131 @@ const TrustGrid: React.FC = () => {
 
         {/* Interactive Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {features.map((feature, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: feature.delay }}
-              onMouseEnter={() => setHoveredCard(i)}
-              onMouseLeave={() => setHoveredCard(null)}
-              className="relative"
-            >
-              <SpotlightCard className="h-full">
-                <div className="p-8 lg:p-10 flex flex-col h-full">
-                  {/* Icon Container with Line Animation */}
-                  <div className="relative mb-8">
-                    {/* Animated border circle */}
-                    <motion.div 
-                      className="absolute -inset-4 rounded-2xl"
-                      style={{
-                        background: `conic-gradient(from 0deg, ${hoveredCard === i ? feature.gradient : 'rgba(225, 186, 115, 0.1)'}, transparent)`
-                      }}
-                      animate={{ 
-                        rotate: hoveredCard === i ? 360 : 0,
-                        opacity: hoveredCard === i ? 1 : 0
-                      }}
-                      transition={{ 
-                        rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                        opacity: { duration: 0.3 }
-                      }}
-                    />
-                    
-                    {/* Icon */}
-                    <motion.div 
-                      className={`relative w-20 h-20 rounded-2xl flex items-center justify-center mb-4 bg-gradient-to-br from-black/80 to-[#1a1410] border`}
-                      style={{
-                        borderColor: hoveredCard === i ? 
-                          `hsl(${i * 60}, 70%, 50%)` : 
-                          'rgba(182, 137, 56, 0.2)'
-                      }}
-                      animate={{ 
-                        scale: hoveredCard === i ? 1.1 : 1,
-                        rotate: hoveredCard === i ? [0, 5, -5, 0] : 0
-                      }}
-                      transition={{ 
-                        scale: { duration: 0.3 },
-                        rotate: { duration: 0.6 }
-                      }}
-                    >
-                      <feature.icon 
-                        size={32} 
-                        className="text-[#e1ba73]" 
-                        strokeWidth={1.5}
-                      />
-                    </motion.div>
-
-                    {/* Line animation */}
-                    <motion.div 
-                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r from-[#e1ba73] to-[#b68938] rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: hoveredCard === i ? "80%" : "40%" }}
-                      transition={{ duration: 0.4 }}
-                    />
-                  </div>
-                  
-                  {/* Title with gradient effect */}
-                  <motion.h3 
-                    className="text-xl lg:text-2xl font-bold mb-4 leading-tight"
-                    animate={{
-                      backgroundImage: hoveredCard === i 
-                        ? `linear-gradient(135deg, ${feature.gradient})`
-                        : 'linear-gradient(135deg, #ffffff, #ffffff)',
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      color: 'transparent'
-                    }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {feature.title}
-                  </motion.h3>
-                  
-                  {/* Description */}
-                  <p className="text-gray-400 text-sm lg:text-base leading-relaxed font-medium mb-6">
-                    {feature.desc}
-                  </p>
-
-                  {/* Progress line at bottom */}
-                  <div className="mt-auto pt-6">
-                    <motion.div 
-                      className="h-[2px] rounded-full overflow-hidden"
-                      initial={{ width: "0%" }}
-                      animate={{ width: hoveredCard === i ? "100%" : "20%" }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                    >
-                      <div 
-                        className="h-full bg-gradient-to-r from-[#e1ba73] to-[#b68938]"
+          {features.map((feature, i) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: feature.delay }}
+                onMouseEnter={() => setHoveredCard(i)}
+                onMouseLeave={() => setHoveredCard(null)}
+                className="relative"
+              >
+                <SpotlightCard className="h-full">
+                  <div className="p-8 lg:p-10 flex flex-col h-full">
+                    {/* Icon Container with Line Animation */}
+                    <div className="relative mb-8">
+                      {/* Animated border circle */}
+                      <motion.div 
+                        className="absolute -inset-4 rounded-2xl"
                         style={{
-                          boxShadow: '0 0 20px rgba(225, 186, 115, 0.5)'
+                          background: `conic-gradient(from 0deg, ${hoveredCard === i ? feature.gradient : 'rgba(225, 186, 115, 0.1)'}, transparent)`
+                        }}
+                        animate={{ 
+                          rotate: hoveredCard === i ? 360 : 0,
+                          opacity: hoveredCard === i ? 1 : 0
+                        }}
+                        transition={{ 
+                          rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                          opacity: { duration: 0.3 }
                         }}
                       />
-                    </motion.div>
-                  </div>
-                </div>
-              </SpotlightCard>
+                      
+                      {/* Icon */}
+                      <motion.div 
+                        className={`relative w-20 h-20 rounded-2xl flex items-center justify-center mb-4 bg-gradient-to-br from-black/80 to-[#1a1410] border`}
+                        style={{
+                          borderColor: hoveredCard === i ? 
+                            `hsl(${i * 60}, 70%, 50%)` : 
+                            'rgba(182, 137, 56, 0.2)'
+                        }}
+                        animate={{ 
+                          scale: hoveredCard === i ? 1.1 : 1,
+                          rotate: hoveredCard === i ? [0, 5, -5, 0] : 0
+                        }}
+                        transition={{ 
+                          scale: { duration: 0.3 },
+                          rotate: { duration: 0.6 }
+                        }}
+                      >
+                        <Icon 
+                          size={32} 
+                          className="text-[#e1ba73]" 
+                          strokeWidth={1.5}
+                        />
+                      </motion.div>
 
-              {/* Glow effect when hovered */}
-              <motion.div 
-                className="absolute inset-0 -z-10 rounded-3xl blur-2xl opacity-0"
-                style={{
-                  background: `radial-gradient(circle at center, ${hoveredCard === i ? feature.gradient.replace('from-', '').replace('to-', '').split(' ')[0] : 'transparent'} 0%, transparent 70%)`
-                }}
-                animate={{ 
-                  opacity: hoveredCard === i ? 0.3 : 0,
-                  scale: hoveredCard === i ? 1.1 : 1
-                }}
-                transition={{ duration: 0.3 }}
-              />
-            </motion.div>
-          ))}
+                      {/* Line animation */}
+                      <motion.div 
+                        className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r from-[#e1ba73] to-[#b68938] rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: hoveredCard === i ? "80%" : "40%" }}
+                        transition={{ duration: 0.4 }}
+                      />
+                    </div>
+                    
+                    {/* Title with gradient effect */}
+<motion.h3 
+    className="text-xl lg:text-2xl font-bold mb-4 leading-tight"
+    // FIX: Moved static text gradient hacks to the 'style' prop
+    style={{
+        backgroundClip: 'text',
+        WebkitBackgroundClip: 'text',
+        color: 'transparent' // Default text color is transparent
+    }}
+    animate={{
+        // Only animate the changing property (backgroundImage)
+        backgroundImage: hoveredCard === i 
+          ? `linear-gradient(135deg, ${feature.gradient})`
+          : 'linear-gradient(135deg, #ffffff, #ffffff)',
+    }}
+    transition={{ duration: 0.3 }}
+>
+    {feature.title}
+</motion.h3>
+                    
+                    {/* Description */}
+                    <p className="text-gray-400 text-sm lg:text-base leading-relaxed font-medium mb-6">
+                      {feature.desc}
+                    </p>
+
+                    {/* Progress line at bottom */}
+                    <div className="mt-auto pt-6">
+                      <motion.div 
+                        className="h-[2px] rounded-full overflow-hidden"
+                        initial={{ width: "0%" }}
+                        animate={{ width: hoveredCard === i ? "100%" : "20%" }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      >
+                        <div 
+                          className="h-full bg-gradient-to-r from-[#e1ba73] to-[#b68938]"
+                          style={{
+                            boxShadow: '0 0 20px rgba(225, 186, 115, 0.5)'
+                          }}
+                        />
+                      </motion.div>
+                    </div>
+                  </div>
+                </SpotlightCard>
+
+                {/* Glow effect when hovered */}
+                <motion.div 
+                  className="absolute inset-0 -z-10 rounded-3xl blur-2xl opacity-0"
+                  style={{
+                    background: `radial-gradient(circle at center, ${hoveredCard === i ? feature.gradient.replace('from-', '').replace('to-', '').split(' ')[0] : 'transparent'} 0%, transparent 70%)`
+                  }}
+                  animate={{ 
+                    opacity: hoveredCard === i ? 0.3 : 0,
+                    scale: hoveredCard === i ? 1.1 : 1
+                  }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -994,7 +1036,23 @@ const TrustGrid: React.FC = () => {
 const SynergySection: React.FC = () => {
   const [flipped, setFlipped] = useState<number | null>(null);
 
-  const cards = [
+  interface CardData {
+    front: {
+      title: string;
+      subtitle: string;
+      icon: React.ComponentType<any>;
+      description: string;
+      gradient: string;
+      stats: string[];
+    };
+    back: {
+      title: string;
+      description: string;
+      features: string[];
+    };
+  }
+
+  const cards: CardData[] = [
     {
       front: {
         title: "SRK Grow",
@@ -1027,9 +1085,16 @@ const SynergySection: React.FC = () => {
     }
   ];
 
-  const stats = [
+  interface Stat {
+    value: string;
+    label: string;
+    icon: React.ComponentType<any>;
+    color: string;
+  }
+
+  const stats: Stat[] = [
     { value: "500+", label: "Active Tasks", icon: TargetIcon, color: "#e1ba73" },
-    { value: "₹10L+", label: "Monthly Payouts", icon: Wallet, color: "#d4af37" },
+    { value: "₹10L+", label: "Monthly Payouts", icon: WalletIcon, color: "#d4af37" },
     { value: "50K+", label: "Verified Users", icon: UsersIcon, color: "#b68938" },
     { value: "99.9%", label: "Success Rate", icon: Trophy, color: "#e1ba73" }
   ];
@@ -1106,106 +1171,109 @@ const SynergySection: React.FC = () => {
 
         {/* Flipping Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
-          {cards.map((card, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.2 }}
-              className="relative h-[500px] perspective-1000"
-              onMouseEnter={() => setFlipped(i)}
-              onMouseLeave={() => setFlipped(null)}
-            >
+          {cards.map((card, i) => {
+            const Icon = card.front.icon;
+            return (
               <motion.div
-                className="relative w-full h-full preserve-3d"
-                animate={{ rotateY: flipped === i ? 180 : 0 }}
-                transition={{ duration: 0.8, type: "spring" }}
-                style={{ transformStyle: "preserve-3d" }}
+                key={i}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.2 }}
+                className="relative h-[500px] perspective-1000"
+                onMouseEnter={() => setFlipped(i)}
+                onMouseLeave={() => setFlipped(null)}
               >
-                {/* Front Side */}
-                <div 
-                  className="absolute inset-0 backface-hidden rounded-3xl overflow-hidden"
-                  style={{ backfaceVisibility: 'hidden' }}
+                <motion.div
+                  className="relative w-full h-full preserve-3d"
+                  animate={{ rotateY: flipped === i ? 180 : 0 }}
+                  transition={{ duration: 0.8, type: "spring" }}
+                  style={{ transformStyle: "preserve-3d" }}
                 >
-                  <SpotlightCard className="h-full">
-                    <div className="p-10 h-full flex flex-col">
-                      {/* Icon */}
-                      <div className="mb-8">
-                        <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${card.front.gradient} flex items-center justify-center shadow-[0_20px_40px_rgba(182,137,56,0.3)]`}>
-                          <card.front.icon className="w-10 h-10 text-black" />
+                  {/* Front Side */}
+                  <div 
+                    className="absolute inset-0 backface-hidden rounded-3xl overflow-hidden"
+                    style={{ backfaceVisibility: 'hidden' }}
+                  >
+                    <SpotlightCard className="h-full">
+                      <div className="p-10 h-full flex flex-col">
+                        {/* Icon */}
+                        <div className="mb-8">
+                          <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${card.front.gradient} flex items-center justify-center shadow-[0_20px_40px_rgba(182,137,56,0.3)]`}>
+                            <Icon className="w-10 h-10 text-black" />
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <h3 className="text-3xl font-bold text-white mb-3">{card.front.title}</h3>
+                        <p className="text-[#e1ba73] text-sm uppercase tracking-widest font-bold mb-6">
+                          {card.front.subtitle}
+                        </p>
+                        <p className="text-gray-400 text-lg font-medium mb-8 leading-relaxed">
+                          {card.front.description}
+                        </p>
+
+                        {/* Stats */}
+                        <div className="mt-auto space-y-3">
+                          {card.front.stats.map((stat, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                              <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#e1ba73] to-[#b68938]" />
+                              <span className="text-sm text-gray-300 font-medium">{stat}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Flip hint */}
+                        <motion.div 
+                          className="absolute bottom-6 right-6 text-[#b68938]"
+                          animate={{ x: [0, 5, 0] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          <ArrowRight className="w-5 h-5 rotate-180" />
+                        </motion.div>
+                      </div>
+                    </SpotlightCard>
+                  </div>
+
+                  {/* Back Side */}
+                  <div 
+                    className="absolute inset-0 backface-hidden rounded-3xl overflow-hidden"
+                    style={{ 
+                      backfaceVisibility: 'hidden',
+                      transform: 'rotateY(180deg)'
+                    }}
+                  >
+                    <SpotlightCard className="h-full">
+                      <div className="p-10 h-full flex flex-col bg-gradient-to-br from-[#1a1410] to-black">
+                        <h3 className="text-3xl font-bold text-white mb-6">{card.back.title}</h3>
+                        <p className="text-gray-400 text-lg font-medium mb-8 leading-relaxed">
+                          {card.back.description}
+                        </p>
+
+                        {/* Features */}
+                        <div className="space-y-4 mt-auto">
+                          {card.back.features.map((feature, idx) => (
+                            <motion.div 
+                              key={idx}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: idx * 0.1 }}
+                              className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5"
+                            >
+                              <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-[#e1ba73]/20 to-[#b68938]/20 flex items-center justify-center">
+                                <CheckCircle className="w-5 h-5 text-[#e1ba73]" />
+                              </div>
+                              <span className="text-white font-medium">{feature}</span>
+                            </motion.div>
+                          ))}
                         </div>
                       </div>
-
-                      {/* Content */}
-                      <h3 className="text-3xl font-bold text-white mb-3">{card.front.title}</h3>
-                      <p className="text-[#e1ba73] text-sm uppercase tracking-widest font-bold mb-6">
-                        {card.front.subtitle}
-                      </p>
-                      <p className="text-gray-400 text-lg font-medium mb-8 leading-relaxed">
-                        {card.front.description}
-                      </p>
-
-                      {/* Stats */}
-                      <div className="mt-auto space-y-3">
-                        {card.front.stats.map((stat, idx) => (
-                          <div key={idx} className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#e1ba73] to-[#b68938]" />
-                            <span className="text-sm text-gray-300 font-medium">{stat}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Flip hint */}
-                      <motion.div 
-                        className="absolute bottom-6 right-6 text-[#b68938]"
-                        animate={{ x: [0, 5, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <ArrowRight className="w-5 h-5 rotate-180" />
-                      </motion.div>
-                    </div>
-                  </SpotlightCard>
-                </div>
-
-                {/* Back Side */}
-                <div 
-                  className="absolute inset-0 backface-hidden rounded-3xl overflow-hidden"
-                  style={{ 
-                    backfaceVisibility: 'hidden',
-                    transform: 'rotateY(180deg)'
-                  }}
-                >
-                  <SpotlightCard className="h-full">
-                    <div className="p-10 h-full flex flex-col bg-gradient-to-br from-[#1a1410] to-black">
-                      <h3 className="text-3xl font-bold text-white mb-6">{card.back.title}</h3>
-                      <p className="text-gray-400 text-lg font-medium mb-8 leading-relaxed">
-                        {card.back.description}
-                      </p>
-
-                      {/* Features */}
-                      <div className="space-y-4 mt-auto">
-                        {card.back.features.map((feature, idx) => (
-                          <motion.div 
-                            key={idx}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5"
-                          >
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-[#e1ba73]/20 to-[#b68938]/20 flex items-center justify-center">
-                              <CheckCircle className="w-5 h-5 text-[#e1ba73]" />
-                            </div>
-                            <span className="text-white font-medium">{feature}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  </SpotlightCard>
-                </div>
+                    </SpotlightCard>
+                  </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Connection Arrow */}
@@ -1251,42 +1319,45 @@ const SynergySection: React.FC = () => {
 
         {/* Stats Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.1 + 0.4 }}
-              className="relative group"
-              whileHover={{ scale: 1.05 }}
-            >
-              <SpotlightCard>
-                <div className="p-8 flex flex-col items-center text-center">
-                  <div 
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
-                    style={{ 
-                      background: `rgba(${parseInt(stat.color.slice(1, 3), 16)}, ${parseInt(stat.color.slice(3, 5), 16)}, ${parseInt(stat.color.slice(5, 7), 16)}, 0.1)`,
-                      border: `1px solid ${stat.color}40`
-                    }}
-                  >
-                    <stat.icon className="w-7 h-7" style={{ color: stat.color }} />
+          {stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.1 + 0.4 }}
+                className="relative group"
+                whileHover={{ scale: 1.05 }}
+              >
+                <SpotlightCard>
+                  <div className="p-8 flex flex-col items-center text-center">
+                    <div 
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
+                      style={{ 
+                        background: `rgba(${parseInt(stat.color.slice(1, 3), 16)}, ${parseInt(stat.color.slice(3, 5), 16)}, ${parseInt(stat.color.slice(5, 7), 16)}, 0.1)`,
+                        border: `1px solid ${stat.color}40`
+                      }}
+                    >
+                      <Icon className="w-7 h-7" style={{ color: stat.color }} />
+                    </div>
+                    
+                    <div 
+                      className="text-4xl font-bold mb-3"
+                      style={{ color: stat.color }}
+                    >
+                      {stat.value}
+                    </div>
+                    
+                    <div className="text-sm text-gray-400 font-medium tracking-wider uppercase">
+                      {stat.label}
+                    </div>
                   </div>
-                  
-                  <div 
-                    className="text-4xl font-bold mb-3"
-                    style={{ color: stat.color }}
-                  >
-                    {stat.value}
-                  </div>
-                  
-                  <div className="text-sm text-gray-400 font-medium tracking-wider uppercase">
-                    {stat.label}
-                  </div>
-                </div>
-              </SpotlightCard>
-            </motion.div>
-          ))}
+                </SpotlightCard>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1320,7 +1391,14 @@ const AvailableEverywhere: React.FC = () => {
   const shinePosition = useSpring(useTransform(scrollYProgress, [0, 1], ["-100%", "200%"]), springConfig);
   const shineOpacity = useSpring(useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 0.6, 0.6, 0]), springConfig);
 
-  const features = [
+  interface Feature {
+    icon: React.ComponentType<any>;
+    title: string;
+    desc: string;
+    delay: number;
+  }
+
+  const features: Feature[] = [
     { 
       icon: Smartphone, 
       title: "Universal Access", 
@@ -1347,25 +1425,28 @@ const AvailableEverywhere: React.FC = () => {
   const [animatedBalance, setAnimatedBalance] = useState(24500);
 
   // Scroll-based notification triggers
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    console.log("Scroll progress in AvailableEverywhere:", latest);
-    
-    if (latest > 0.25 && !notifications[0]) {
-      setTimeout(() => setNotifications(prev => [true, prev[1], prev[2]]), 300);
-    }
-    if (latest > 0.5 && !notifications[1]) {
-      setTimeout(() => setNotifications(prev => [true, true, prev[2]]), 600);
-    }
-    if (latest > 0.75 && !notifications[2]) {
-      setTimeout(() => setNotifications(prev => [true, true, true]), 900);
-    }
-    
-    // Balance animation based on scroll
-    if (latest > 0.4 && latest < 0.6) {
-      const newBalance = 24500 + Math.floor(latest * 1000);
-      setAnimatedBalance(newBalance);
-    }
-  });
+  useEffect(() => {
+    const unsubscribe = scrollYProgress.onChange((latest) => {
+      console.log("Scroll progress in AvailableEverywhere:", latest);
+      
+      if (latest > 0.25 && !notifications[0]) {
+        setTimeout(() => setNotifications(prev => [true, prev[1], prev[2]]), 300);
+      }
+      if (latest > 0.5 && !notifications[1]) {
+        setTimeout(() => setNotifications(prev => [true, true, prev[2]]), 600);
+      }
+      if (latest > 0.75 && !notifications[2]) {
+        setTimeout(() => setNotifications(prev => [true, true, true]), 900);
+      }
+      
+      // Balance animation based on scroll
+      if (latest > 0.4 && latest < 0.6) {
+        const newBalance = 24500 + Math.floor(latest * 1000);
+        setAnimatedBalance(newBalance);
+      }
+    });
+    return () => unsubscribe();
+  }, [scrollYProgress, notifications]);
 
   // Continuous animations
   useEffect(() => {
@@ -1449,7 +1530,7 @@ const AvailableEverywhere: React.FC = () => {
             style={{ 
               rotateX, 
               rotateY, 
-              scale, 
+              scale: scale as any, 
               y, 
               opacity,
               transformStyle: "preserve-3d" 
@@ -1625,53 +1706,56 @@ const AvailableEverywhere: React.FC = () => {
                       { icon: Users, title: "Instagram Follow", time: "Just now", amount: 50 },
                       { icon: Target, title: "YouTube View", time: "5 min ago", amount: 75 },
                       { icon: MessageSquare, title: "Comment Task", time: "10 min ago", amount: 35 }
-                    ].map((task, index) => (
-                      <motion.div 
-                        key={index}
-                        initial={{ opacity: 0, x: -20, scale: 0.9 }}
-                        animate={{ 
-                          opacity: notifications[index] ? 1 : 0, 
-                          x: notifications[index] ? 0 : -20,
-                          scale: notifications[index] ? 1 : 0.9
-                        }}
-                        transition={{ 
-                          duration: 0.5, 
-                          delay: index * 0.2,
-                          type: "spring",
-                          stiffness: 200
-                        }}
-                        whileHover={{ 
-                          scale: 1.02, 
-                          borderColor: "#e1ba73",
-                          backgroundColor: "rgba(26, 26, 26, 0.8)"
-                        }}
-                        className="flex items-center gap-3 sm:gap-3.5 lg:gap-4 p-3 sm:p-3.5 lg:p-4 rounded-xl sm:rounded-2xl bg-[#111] border border-white/5 backdrop-blur-md cursor-pointer"
-                      >
+                    ].map((task, index) => {
+                      const Icon = task.icon;
+                      return (
                         <motion.div 
-                          className="w-8 sm:w-9 lg:w-10 h-8 sm:h-9 lg:h-10 rounded-full bg-gradient-to-r from-[#e1ba73]/20 to-[#b68938]/20 flex items-center justify-center shrink-0"
-                          whileHover={{ rotate: 360 }}
-                          transition={{ duration: 0.5 }}
-                        >
-                          <task.icon size={14} className="sm:w-4 sm:h-4 lg:w-[18px] lg:h-[18px] text-[#e1ba73]" />
-                        </motion.div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-white text-xs sm:text-sm font-medium truncate">{task.title}</div>
-                          <div className="text-[9px] sm:text-[10px] text-gray-500">{task.time}</div>
-                        </div>
-                        <motion.div 
-                          className="text-[#e1ba73] font-bold text-xs sm:text-sm shrink-0"
-                          animate={{
-                            scale: notifications[index] ? [1, 1.2, 1] : 1
+                          key={index}
+                          initial={{ opacity: 0, x: -20, scale: 0.9 }}
+                          animate={{ 
+                            opacity: notifications[index] ? 1 : 0, 
+                            x: notifications[index] ? 0 : -20,
+                            scale: notifications[index] ? 1 : 0.9
                           }}
                           transition={{ 
-                            duration: 0.3,
-                            delay: index * 0.3
+                            duration: 0.5, 
+                            delay: index * 0.2,
+                            type: "spring",
+                            stiffness: 200
                           }}
+                          whileHover={{ 
+                            scale: 1.02, 
+                            borderColor: "#e1ba73",
+                            backgroundColor: "rgba(26, 26, 26, 0.8)"
+                          }}
+                          className="flex items-center gap-3 sm:gap-3.5 lg:gap-4 p-3 sm:p-3.5 lg:p-4 rounded-xl sm:rounded-2xl bg-[#111] border border-white/5 backdrop-blur-md cursor-pointer"
                         >
-                          +₹{task.amount}
+                          <motion.div 
+                            className="w-8 sm:w-9 lg:w-10 h-8 sm:h-9 lg:h-10 rounded-full bg-gradient-to-r from-[#e1ba73]/20 to-[#b68938]/20 flex items-center justify-center shrink-0"
+                            whileHover={{ rotate: 360 }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <Icon size={14} className="sm:w-4 sm:h-4 lg:w-[18px] lg:h-[18px] text-[#e1ba73]" />
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-white text-xs sm:text-sm font-medium truncate">{task.title}</div>
+                            <div className="text-[9px] sm:text-[10px] text-gray-500">{task.time}</div>
+                          </div>
+                          <motion.div 
+                            className="text-[#e1ba73] font-bold text-xs sm:text-sm shrink-0"
+                            animate={{
+                              scale: notifications[index] ? [1, 1.2, 1] : 1
+                            }}
+                            transition={{ 
+                              duration: 0.3,
+                              delay: index * 0.3
+                            }}
+                          >
+                            +₹{task.amount}
+                          </motion.div>
                         </motion.div>
-                      </motion.div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </motion.div>
@@ -1723,40 +1807,43 @@ const AvailableEverywhere: React.FC = () => {
             
             {/* Animated Features */}
             <div className="space-y-4 sm:space-y-5 lg:space-y-6">
-              {features.map((feature, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: feature.delay }}
-                  whileHover={{ 
-                    x: 10,
-                    borderColor: "#e1ba73",
-                    boxShadow: "0 10px 30px rgba(225, 186, 115, 0.1)"
-                  }}
-                  className="flex items-start gap-3 sm:gap-4 lg:gap-5 p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-white/5 to-transparent border border-white/5 transition-all duration-500 group cursor-pointer"
-                >
-                  <motion.div 
-                    className="w-10 sm:w-11 lg:w-12 h-10 sm:h-11 lg:h-12 rounded-xl bg-gradient-to-r from-[#e1ba73]/10 to-[#b68938]/10 flex items-center justify-center text-[#e1ba73]"
-                    whileHover={{ scale: 1.1, rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                    animate={{
-                      boxShadow: [
-                        "0 0 0px rgba(225,186,115,0.2)",
-                        "0 0 20px rgba(225,186,115,0.4)",
-                        "0 0 0px rgba(225,186,115,0.2)"
-                      ]
+              {features.map((feature, i) => {
+                const Icon = feature.icon;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: feature.delay }}
+                    whileHover={{ 
+                      x: 10,
+                      borderColor: "#e1ba73",
+                      boxShadow: "0 10px 30px rgba(225, 186, 115, 0.1)"
                     }}
+                    className="flex items-start gap-3 sm:gap-4 lg:gap-5 p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-white/5 to-transparent border border-white/5 transition-all duration-500 group cursor-pointer"
                   >
-                    <feature.icon size={20} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                    <motion.div 
+                      className="w-10 sm:w-11 lg:w-12 h-10 sm:h-11 lg:h-12 rounded-xl bg-gradient-to-r from-[#e1ba73]/10 to-[#b68938]/10 flex items-center justify-center text-[#e1ba73]"
+                      whileHover={{ scale: 1.1, rotate: 360 }}
+                      transition={{ duration: 0.5 }}
+                      animate={{
+                        boxShadow: [
+                          "0 0 0px rgba(225,186,115,0.2)",
+                          "0 0 20px rgba(225,186,115,0.4)",
+                          "0 0 0px rgba(225,186,115,0.2)"
+                        ]
+                      }}
+                    >
+                      <Icon size={20} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                    </motion.div>
+                    <div>
+                      <h4 className="text-white font-bold text-base sm:text-lg mb-0.5 sm:mb-1">{feature.title}</h4>
+                      <p className="text-gray-500 text-xs sm:text-sm font-medium">{feature.desc}</p>
+                    </div>
                   </motion.div>
-                  <div>
-                    <h4 className="text-white font-bold text-base sm:text-lg mb-0.5 sm:mb-1">{feature.title}</h4>
-                    <p className="text-gray-500 text-xs sm:text-sm font-medium">{feature.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
+                );
+              })}
             </div>
 
             {/* App Store Badges */}
@@ -1770,35 +1857,38 @@ const AvailableEverywhere: React.FC = () => {
               {[
                 { platform: "App Store", icon: Smartphone },
                 { platform: "Google Play", icon: Smartphone }
-              ].map((store, i) => (
-                <motion.div 
-                  key={i}
-                  className="px-4 sm:px-5 lg:px-6 py-2.5 sm:py-2.5 lg:py-3 rounded-xl bg-gradient-to-r from-[#1a1a1c] to-black border border-white/10 hover:border-[#e1ba73]/30 transition-colors cursor-pointer relative overflow-hidden group"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 relative z-10">
-                    <motion.div 
-                      className="w-7 sm:w-7.5 lg:w-8 h-7 sm:h-7.5 lg:h-8 rounded-lg bg-white/10 flex items-center justify-center"
-                      whileHover={{ rotate: 360 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <store.icon className="w-3.5 sm:w-3.5 lg:w-4 h-3.5 sm:h-3.5 lg:h-4 text-white" />
-                    </motion.div>
-                    <div>
-                      <div className="text-[10px] sm:text-xs text-gray-400">
-                        {i === 0 ? "Download on" : "Get it on"}
-                      </div>
-                      <div className="text-white font-bold text-xs sm:text-sm">{store.platform}</div>
-                    </div>
-                  </div>
+              ].map((store, i) => {
+                const Icon = store.icon;
+                return (
                   <motion.div 
-                    className="absolute inset-0 bg-gradient-to-r from-[#e1ba73]/5 to-[#b68938]/5 opacity-0 group-hover:opacity-100"
-                    initial={false}
-                    transition={{ duration: 0.3 }}
-                  />
-                </motion.div>
-              ))}
+                    key={i}
+                    className="px-4 sm:px-5 lg:px-6 py-2.5 sm:py-2.5 lg:py-3 rounded-xl bg-gradient-to-r from-[#1a1a1c] to-black border border-white/10 hover:border-[#e1ba73]/30 transition-colors cursor-pointer relative overflow-hidden group"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <div className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 relative z-10">
+                      <motion.div 
+                        className="w-7 sm:w-7.5 lg:w-8 h-7 sm:h-7.5 lg:h-8 rounded-lg bg-white/10 flex items-center justify-center"
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <Icon className="w-3.5 sm:w-3.5 lg:w-4 h-3.5 sm:h-3.5 lg:h-4 text-white" />
+                      </motion.div>
+                      <div>
+                        <div className="text-[10px] sm:text-xs text-gray-400">
+                          {i === 0 ? "Download on" : "Get it on"}
+                        </div>
+                        <div className="text-white font-bold text-xs sm:text-sm">{store.platform}</div>
+                      </div>
+                    </div>
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-r from-[#e1ba73]/5 to-[#b68938]/5 opacity-0 group-hover:opacity-100"
+                      initial={false}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </motion.div>
         </div>
@@ -1809,7 +1899,16 @@ const AvailableEverywhere: React.FC = () => {
 
 // ===== TRUSTED BY CREATORS SECTION =====
 const TrustedByCreators: React.FC = () => {
-  const reviews = [
+  interface Review {
+    name: string;
+    role: string;
+    content: string;
+    avatar: string;
+    rating: number;
+    stats: { tasks: number; earnings: string };
+  }
+
+  const reviews: Review[] = [
     {
       name: "Priya Sharma",
       role: "Lifestyle Influencer",
@@ -1850,6 +1949,19 @@ const TrustedByCreators: React.FC = () => {
       rating: 5,
       stats: { tasks: 560, earnings: "₹28,000" }
     }
+  ];
+
+  interface Badge {
+    icon: React.ComponentType<any>;
+    label: string;
+    value: string;
+  }
+
+  const badges: Badge[] = [
+    { icon: ShieldCheck, label: "100% Verified", value: "50K+" },
+    { icon: Zap, label: "Instant Payouts", value: "₹10L+" },
+    { icon: Clock, label: "24/7 Support", value: "99.9%" },
+    { icon: Globe, label: "Global Community", value: "120+" }
   ];
 
   // Safe window dimensions for SSR
@@ -2013,27 +2125,25 @@ const TrustedByCreators: React.FC = () => {
           viewport={{ once: true }}
           className="grid grid-cols-2 md:grid-cols-4 gap-4"
         >
-          {[
-            { icon: ShieldCheck, label: "100% Verified", value: "50K+" },
-            { icon: Zap, label: "Instant Payouts", value: "₹10L+" },
-            { icon: Clock, label: "24/7 Support", value: "99.9%" },
-            { icon: Globe, label: "Global Community", value: "120+" }
-          ].map((badge, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.1 + 0.3 }}
-              className="p-6 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 text-center group hover:border-[#e1ba73]/30 transition-colors"
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-[#e1ba73]/10 to-[#b68938]/10 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <badge.icon className="w-6 h-6 text-[#e1ba73]" />
-              </div>
-              <div className="text-2xl font-bold text-white mb-2">{badge.value}</div>
-              <div className="text-sm text-gray-400 font-medium">{badge.label}</div>
-            </motion.div>
-          ))}
+          {badges.map((badge, i) => {
+            const Icon = badge.icon;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.1 + 0.3 }}
+                className="p-6 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 text-center group hover:border-[#e1ba73]/30 transition-colors"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-[#e1ba73]/10 to-[#b68938]/10 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <Icon className="w-6 h-6 text-[#e1ba73]" />
+                </div>
+                <div className="text-2xl font-bold text-white mb-2">{badge.value}</div>
+                <div className="text-sm text-gray-400 font-medium">{badge.label}</div>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
     </section>
@@ -2330,7 +2440,11 @@ const TaskLandingPage: React.FC = () => {
       <Footer />
 
       {/* Global Styles */}
-      <style jsx global>{`
+    
+      {/* FIX: Replaced the unsupported styled-jsx syntax with a standard 
+        <style> element to correctly apply global CSS styles 
+      */}
+      <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
         
         body {
@@ -2433,7 +2547,7 @@ const TaskLandingPage: React.FC = () => {
           text-rendering: optimizeLegibility;
           letter-spacing: -0.02em;
         }
-      `}</style>
+      `}} />
     </main>
   );
 };

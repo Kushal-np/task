@@ -10,6 +10,7 @@ interface User {
   balance: number;
   status: string;
   joinDate: string;
+  referer: string; // Added referer field
 }
 
 interface TaskDetail {
@@ -103,16 +104,16 @@ const THEME = {
   }
 };
 
-// --- Mock Data ---
+// --- Mock Data with Referer field added ---
 const ALL_USERS_DATA: User[] = [
-  { id: 'AC32R7L', name: 'Alex Chen', role: 'Affiliate', package: 'SRK Prime', balance: 5200.50, status: 'Active', joinDate: '2025-01-15' },
-  { id: 'DM18Y9P', name: 'David Martinez', role: 'Affiliate', package: 'SRK Gold', balance: 1200.00, status: 'Active', joinDate: '2025-03-22' },
-  { id: 'EP40Q2K', name: 'Emily Peterson', role: 'Client', package: 'SRK Prime', balance: 0.00, status: 'Inactive', joinDate: '2024-11-01' },
-  { id: 'SR11Z0G', name: 'Sara Ramirez', role: 'Affiliate', package: 'SRK Basic', balance: 450.75, status: 'Pending Verification', joinDate: '2025-10-29' },
-  { id: 'JK55T6A', name: 'John Kim', role: 'Client', package: 'SRK Gold', balance: 0.00, status: 'Active', joinDate: '2025-05-10' },
-  { id: 'LT66B8C', name: 'Lisa Taylor', role: 'Affiliate', package: 'SRK Elite', balance: 10500.20, status: 'Active', joinDate: '2024-12-05' },
-  { id: 'MG99X1F', name: 'Michael Garcia', role: 'Affiliate', package: 'SRK Prime', balance: 3200.75, status: 'Active', joinDate: '2025-07-18' },
-  { id: 'RS77Y2H', name: 'Rachel Smith', role: 'Client', package: 'SRK Basic', balance: 0.00, status: 'Pending', joinDate: '2025-10-30' },
+  { id: 'AC32R7L', name: 'Alex Chen', role: 'Affiliate', package: 'SRK Prime', balance: 5200.50, status: 'Active', joinDate: '2025-01-15', referer: 'SRK Admin' },
+  { id: 'DM18Y9P', name: 'David Martinez', role: 'Affiliate', package: 'SRK Gold', balance: 1200.00, status: 'Active', joinDate: '2025-03-22', referer: 'Alex Chen' },
+  { id: 'EP40Q2K', name: 'Emily Peterson', role: 'Client', package: 'SRK Prime', balance: 0.00, status: 'Inactive', joinDate: '2024-11-01', referer: 'Self' },
+  { id: 'SR11Z0G', name: 'Sara Ramirez', role: 'Affiliate', package: 'SRK Basic', balance: 450.75, status: 'Pending Verification', joinDate: '2025-10-29', referer: 'David Martinez' },
+  { id: 'JK55T6A', name: 'John Kim', role: 'Client', package: 'SRK Gold', balance: 0.00, status: 'Active', joinDate: '2025-05-10', referer: 'Alex Chen' },
+  { id: 'LT66B8C', name: 'Lisa Taylor', role: 'Affiliate', package: 'SRK Elite', balance: 10500.20, status: 'Active', joinDate: '2024-12-05', referer: 'Self' },
+  { id: 'MG99X1F', name: 'Michael Garcia', role: 'Affiliate', package: 'SRK Prime', balance: 3200.75, status: 'Active', joinDate: '2025-07-18', referer: 'Lisa Taylor' },
+  { id: 'RS77Y2H', name: 'Rachel Smith', role: 'Client', package: 'SRK Basic', balance: 0.00, status: 'Pending', joinDate: '2025-10-30', referer: 'Sara Ramirez' },
 ];
 
 const PRIVATE_TASK_PERFORMANCE_DATA: PrivateTaskPerformance[] = [
@@ -396,14 +397,14 @@ const GlobalOverviewView: React.FC<{ data: DashboardData }> = ({ data }) => {
   const stats = [
     {
       label: 'Total Revenue',
-      value: `$${data.totalRevenue.toLocaleString()}`,
+      value: `₹${data.totalRevenue.toLocaleString()}`,
       trend: '+12.5%',
       description: 'Monthly growth',
       icon: '💰'
     },
     {
       label: 'Total Liability',
-      value: `$${data.totalLiability.toLocaleString()}`,
+      value: `₹${data.totalLiability.toLocaleString()}`,
       trend: '-3.2%',
       description: 'Outstanding balance',
       icon: '📊'
@@ -550,7 +551,7 @@ const GlobalOverviewView: React.FC<{ data: DashboardData }> = ({ data }) => {
                   </div>
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-emerald-400 font-medium">Revenue: ${trend.revenue}K</span>
+                      <span className="text-emerald-400 font-medium">Revenue: ₹{trend.revenue}K</span>
                       <span className="text-white font-bold">+{(trend.revenue / 10).toFixed(1)}%</span>
                     </div>
                     <div className="h-2 bg-gray-800/50 rounded-full overflow-hidden">
@@ -769,7 +770,7 @@ const TaskMonitoringView: React.FC<{ data: DashboardData }> = ({ data }) => {
                           whileHover={{ scale: 1.1 }}
                           className="text-white font-bold bg-gradient-to-r from-[#b68938]/20 to-[#e1ba73]/20 px-3 py-1 rounded-full"
                         >
-                          ${currentUser.balance.toFixed(2)}
+                          ₹{currentUser.balance.toFixed(2)}
                         </motion.span>
                       </div>
                     </div>
@@ -1069,7 +1070,7 @@ const UserListView: React.FC<{ data: DashboardData; filterRole?: 'Affiliate' | '
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Package</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Balance</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Actions</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Referer</th>
                 </tr>
               </thead>
               <tbody>
@@ -1107,29 +1108,20 @@ const UserListView: React.FC<{ data: DashboardData; filterRole?: 'Affiliate' | '
                         className="text-2xl font-bold"
                         style={{ color: THEME.colors.goldAccent }}
                       >
-                        ${user.balance.toFixed(2)}
+                        ₹{user.balance.toFixed(2)}
                       </motion.span>
                     </td>
                     <td className="py-4 px-6">
                       <StatusBadge status={user.status} />
                     </td>
                     <td className="py-4 px-6">
-                      <div className="flex gap-2">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="px-3 py-1 bg-white/5 text-white rounded-lg hover:bg-white/10 text-sm transition-colors"
-                        >
-                          Edit
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="px-3 py-1 bg-blue-500/10 text-blue-300 rounded-lg hover:bg-blue-500/20 text-sm transition-colors"
-                        >
-                          View
-                        </motion.button>
-                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        user.referer === 'Self' 
+                          ? 'bg-gray-500/10 text-gray-300 border border-gray-500/20'
+                          : 'bg-purple-500/10 text-purple-300 border border-purple-500/20'
+                      }`}>
+                        {user.referer}
+                      </span>
                     </td>
                   </motion.tr>
                 ))}
@@ -1151,13 +1143,21 @@ const CreateUserView: React.FC = () => {
     email: '',
     role: 'Client',
     package: 'SRK Basic',
-    balance: '0'
+    balance: '0',
+    promoCode: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`User ${formData.name} created successfully!`);
-    setFormData({ name: '', email: '', role: 'Client', package: 'SRK Basic', balance: '0' });
+    alert(`User ${formData.name} created successfully with promo code: ${formData.promoCode || 'None'}`);
+    setFormData({ 
+      name: '', 
+      email: '', 
+      role: 'Client', 
+      package: 'SRK Basic', 
+      balance: '0',
+      promoCode: '' 
+    });
   };
 
   return (
@@ -1225,10 +1225,10 @@ const CreateUserView: React.FC = () => {
                       onChange={(e) => setFormData({...formData, package: e.target.value})}
                       className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent appearance-none pr-8"
                     >
-                      <option value="SRK Basic">SRK Basic ($99)</option>
-                      <option value="SRK Gold">SRK Gold ($299)</option>
-                      <option value="SRK Prime">SRK Prime ($499)</option>
-                      <option value="SRK Elite">SRK Elite ($999)</option>
+                      <option value="SRK Basic">SRK Basic (₹8,249)</option>
+                      <option value="SRK Gold">SRK Gold (₹24,916)</option>
+                      <option value="SRK Prime">SRK Prime (₹41,583)</option>
+                      <option value="SRK Elite">SRK Elite (₹83,166)</option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <span className="text-gray-400">▼</span>
@@ -1236,9 +1236,9 @@ const CreateUserView: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">Initial Balance</label>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Initial Balance (₹)</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-3 text-gray-400">$</span>
+                    <span className="absolute left-3 top-3 text-gray-400">₹</span>
                     <input
                       type="number"
                       step="0.01"
@@ -1248,6 +1248,16 @@ const CreateUserView: React.FC = () => {
                       placeholder="0.00"
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Promo Code (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.promoCode}
+                    onChange={(e) => setFormData({...formData, promoCode: e.target.value})}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#b68938]/50 focus:border-transparent"
+                    placeholder="Enter promo code"
+                  />
                 </div>
               </div>
               
@@ -1284,7 +1294,7 @@ const CreateUserView: React.FC = () => {
               </div>
               <div className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
                 <p className="text-sm text-gray-400">Avg Balance</p>
-                <p className="text-2xl font-bold text-white">$1,245.50</p>
+                <p className="text-2xl font-bold text-white">₹1,03,792</p>
               </div>
             </div>
           </div>
@@ -1317,7 +1327,7 @@ const PayoutQueueView: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-400">
-            Total: <span className="text-white font-bold">${mockQueueData.payoutQueue.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</span>
+            Total: <span className="text-white font-bold">₹{mockQueueData.payoutQueue.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</span>
           </span>
         </div>
       </div>
@@ -1343,10 +1353,10 @@ const PayoutQueueView: React.FC = () => {
                   </th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Request ID</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">User ID</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Amount</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Amount (₹)</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Date</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Actions</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -1384,7 +1394,7 @@ const PayoutQueueView: React.FC = () => {
                         className="text-2xl font-bold"
                         style={{ color: THEME.colors.goldAccent }}
                       >
-                        ${payout.amount.toFixed(2)}
+                        ₹{payout.amount.toFixed(2)}
                       </motion.span>
                     </td>
                     <td className="py-4 px-6 text-gray-400">{payout.date}</td>
@@ -1400,13 +1410,6 @@ const PayoutQueueView: React.FC = () => {
                           className="px-4 py-2 bg-emerald-600/20 text-emerald-300 rounded-lg hover:bg-emerald-600/30 transition-colors text-sm"
                         >
                           Process
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="px-4 py-2 bg-white/5 text-white rounded-lg hover:bg-white/10 text-sm transition-colors"
-                        >
-                          View
                         </motion.button>
                       </div>
                     </td>
@@ -1444,7 +1447,7 @@ const PayoutQueueView: React.FC = () => {
 
 const PaymentVerificationView: React.FC = () => {
   const handleVerify = (id: string) => {
-    alert(`Verifying payment ${id}...`);
+    alert(`Payment ${id} verified successfully! User will now receive their payment.`);
   };
 
   return (
@@ -1470,10 +1473,10 @@ const PaymentVerificationView: React.FC = () => {
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Verification ID</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">User ID</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Package</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Amount</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Amount (₹)</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Date</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Actions</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-400">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -1500,7 +1503,7 @@ const PaymentVerificationView: React.FC = () => {
                         className="text-2xl font-bold"
                         style={{ color: THEME.colors.goldAccent }}
                       >
-                        ${verification.amount?.toFixed(2) || '0.00'}
+                        ₹{verification.amount?.toFixed(2) || '0.00'}
                       </motion.span>
                     </td>
                     <td className="py-4 px-6 text-gray-400">{verification.date}</td>
@@ -1513,16 +1516,9 @@ const PaymentVerificationView: React.FC = () => {
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleVerify(verification.id)}
-                          className="px-4 py-2 bg-blue-600/20 text-blue-300 rounded-lg hover:bg-blue-600/30 transition-colors text-sm"
+                          className="px-4 py-2 bg-emerald-600/20 text-emerald-300 rounded-lg hover:bg-emerald-600/30 transition-colors text-sm"
                         >
-                          Verify
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="px-4 py-2 bg-white/5 text-white rounded-lg hover:bg-white/10 text-sm transition-colors"
-                        >
-                          View Docs
+                          Verify Payment
                         </motion.button>
                       </div>
                     </td>
@@ -1574,7 +1570,7 @@ const PerformanceTrendView: React.FC<{ data: DashboardData }> = ({ data }) => {
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="text-emerald-400 font-medium">${trend.revenue}K</span>
+                        <span className="text-emerald-400 font-medium">₹{trend.revenue}K</span>
                         <span className="text-white font-bold">+{(trend.revenue / 10).toFixed(1)}%</span>
                       </div>
                       <div className="w-full h-3 bg-gray-800/50 rounded-full overflow-hidden">
@@ -1639,7 +1635,7 @@ const PerformanceTrendView: React.FC<{ data: DashboardData }> = ({ data }) => {
   );
 };
 
-// --- Premium Sidebar Component ---
+// --- Premium Sidebar Component with improved mobile background ---
 const Sidebar: React.FC<{
   activeView: string;
   setActiveView: (view: string) => void;
@@ -1665,7 +1661,7 @@ const Sidebar: React.FC<{
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         />
       )}
@@ -1679,7 +1675,7 @@ const Sidebar: React.FC<{
           flex-col w-64
         `}
       >
-        <div className="flex-1 flex flex-col">
+        <div className={`flex-1 flex flex-col ${isMobile ? 'bg-gradient-to-b from-[#1a140f] to-[#0f0a05]' : ''}`}>
           {/* Logo */}
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -1761,7 +1757,7 @@ const Sidebar: React.FC<{
 };
 
 // --- Main App Component ---
-const App: React.FC = () => {
+const GrowOnlyAdminDashboard: React.FC = () => {
   const [activeView, setActiveView] = useState('global');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -2013,9 +2009,27 @@ const App: React.FC = () => {
         .glass-card:hover::before {
           left: 100%;
         }
+
+        /* Better mobile visibility */
+        @media (max-width: 768px) {
+          .glass-card {
+            background: rgba(26, 20, 16, 0.8) !important;
+            backdrop-filter: blur(20px) !important;
+          }
+          
+          table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+          }
+          
+          td, th {
+            min-width: 120px;
+          }
+        }
       `}</style>
     </div>
   );
 };
 
-export default App;
+export default GrowOnlyAdminDashboard;

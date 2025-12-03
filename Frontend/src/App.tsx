@@ -1,11 +1,11 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import PackageSelectionPage from "./srktaskpremium/SRKGROWONLY/PackageSelectionPage";
-import Dashboard from "./srktaskpremium/Dashboard/Dashboard";
-import GrowOnlyAdminDashboard from "./growonly/GrowOnlyAdminDashboard";
 import TaskLandingPage from "./srktaskpremium/Task";
-import GrowDashboard from "./srktaskpremium/Dashboard/GrowDashboard";
-import AfterVerified from "./srktaskpremium/afterVerification/index";
+import PackageSelectionPage from "./growonly/PackageSelectionPage";
+import GrowOnlyAdminDashboard from "./growonly/GrowOnlyAdminDashboard";
+import GrowDashboard from "./growonly/GrowDashboard";
+import AfterVerified from "./srktaskpremium/afterVerification";
+import Dashboard from "./srktaskpremium/Dashboard/Dashboard";
 const App: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-black text-white">

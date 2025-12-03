@@ -1,8 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, ShieldCheck, ListChecks, Users, Trophy, DollarSign, X, Menu, Youtube, Facebook, Instagram, Twitter, Wallet, Repeat2, CheckCircle, Clock } from 'lucide-react';
+import { Shield, ShieldCheck, ListChecks, Users, Trophy, DollarSign, X, Menu, Youtube, Facebook, Instagram, Twitter, Wallet, Repeat2, CheckCircle, Clock, AlertCircle, Coins, CoinsIcon } from 'lucide-react';
 
 // --- TYPE DEFINITIONS ---
+interface RejectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  taskName: string;
+  username: string;
+}
 
 interface Payout {
   id: number;
@@ -72,6 +79,13 @@ interface NavLink {
     content: React.ReactNode;
 }
 
+// --- Theme Constants (Based on Luxury Gold Theme) ---
+const GOLD_PRIMARY = '#E1BA73'; // Light Gold
+const GOLD_ACCENT = '#B68938'; // Dark Gold
+const DARK_BG = '#0A0705'; // Deep Black/Brown
+const TEXT_LIGHT = '#F5F5F5';
+const CARD_BG = '#1A1715';
+
 // --- CUSTOM HOOK FOR MEDIA QUERY ---
 const useIsDesktop = (minWidth = 768): boolean => {
   const [isDesktop, setIsDesktop] = useState<boolean>(false);
@@ -97,13 +111,6 @@ const useIsDesktop = (minWidth = 768): boolean => {
   return isDesktop;
 };
 // --------------------------------------------------------------------------
-
-// --- Theme Constants (Based on Luxury Gold Theme) ---
-const GOLD_PRIMARY = '#E1BA73'; // Light Gold
-const GOLD_ACCENT = '#B68938'; // Dark Gold
-const DARK_BG = '#0A0705'; // Deep Black/Brown
-const TEXT_LIGHT = '#F5F5F5';
-const CARD_BG = '#1A1715';
 
 // --- Dummy Data (Casting to defined types) ---
 
@@ -193,6 +200,191 @@ const DUMMY_LEADERBOARD: LeaderboardUser[] = DUMMY_USERS
   .map((user, index) => ({ ...user, rank: index + 1 }));
 
 // --- UI Components ---
+
+/**
+ * Rejection Modal Component
+ */
+const RejectionModal: React.FC<RejectionModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  taskName, 
+  username 
+}) => {
+  const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // NOTE: Per instructions, we MUST use a custom UI instead of alert()
+  const [showError, setShowError] = useState(false);
+
+  const handleSubmit = () => {
+    if (!rejectionReason.trim()) {
+      setShowError(true);
+      return;
+    }
+    setShowError(false);
+    
+    setIsSubmitting(true);
+    // Simulate API call delay
+    setTimeout(() => {
+      onConfirm(rejectionReason);
+      setIsSubmitting(false);
+      setRejectionReason('');
+    }, 500);
+  };
+
+  const handleClose = () => {
+    setRejectionReason('');
+    setShowError(false);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        onClick={handleClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ type: "spring", damping: 25 }}
+          className="relative w-full max-w-md rounded-2xl border border-gray-700/50 shadow-2xl"
+          style={{ 
+            background: CARD_BG,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.8)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-red-900/30">
+                <AlertCircle className="text-red-400" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Reject Task Submission</h3>
+                <p className="text-sm text-gray-400">Provide a reason for rejection</p>
+              </div>
+            </div>
+            <button
+              onClick={handleClose}
+              className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800/50 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm text-gray-400">Task:</p>
+              <p className="font-medium text-white bg-gray-800/30 p-3 rounded-lg">{taskName}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-sm text-gray-400">Submitted by:</p>
+              <p className="font-medium text-[#E1BA73] bg-gray-800/30 p-3 rounded-lg">{username}</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">
+                Rejection Reason *
+                <span className="text-red-400 ml-1">(Required)</span>
+              </label>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => {
+                    setRejectionReason(e.target.value);
+                    if (e.target.value.trim()) setShowError(false);
+                }}
+                placeholder="Please provide a clear reason for rejecting this task submission. This will be shown to the user."
+                className={`w-full h-32 p-3 bg-gray-900/50 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors resize-none ${
+                    showError ? 'border-red-500 focus:border-red-500 ring-1 ring-red-500' : 'border-gray-700 focus:border-[#E1BA73]/50 focus:ring-1 focus:ring-[#E1BA73]/30'
+                }`}
+              />
+              {showError && (
+                <p className="text-sm text-red-400 flex items-center gap-1 mt-1">
+                    <AlertCircle size={16} /> Rejection reason is mandatory.
+                </p>
+              )}
+              <p className="text-xs text-gray-500">
+                The user will receive this feedback. Be specific and constructive.
+              </p>
+            </div>
+
+            {/* Common rejection reasons (quick select) */}
+            <div className="space-y-2">
+              <p className="text-sm text-gray-400">Quick select common reasons:</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "Incomplete proof",
+                  "Proof doesn't match task requirements",
+                  "Low quality submission",
+                  "Violates community guidelines",
+                  "Duplicate submission",
+                  "Insufficient evidence"
+                ].map((reason) => (
+                  <button
+                    key={reason}
+                    onClick={() => {
+                        setRejectionReason(reason);
+                        setShowError(false);
+                    }}
+                    className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors"
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="flex gap-3 p-6 border-t border-gray-700/50">
+            <button
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2.5 text-white bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <motion.button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+              whileHover={{ scale: !isSubmitting ? 1.02 : 1 }}
+              whileTap={{ scale: !isSubmitting ? 0.98 : 1 }}
+            >
+              {isSubmitting ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                  />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <X size={16} />
+                  Confirm Rejection
+                </>
+              )}
+            </motion.button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 
 interface GoldButtonProps {
   children: React.ReactNode;
@@ -293,15 +485,76 @@ interface TaskVerificationContentProps {
 }
 
 /**
- * Task Verification Section Content (NEW)
+ * Task Verification Section Content (UPDATED to include Rejection Modal)
  */
 const TaskVerificationContent: React.FC<TaskVerificationContentProps> = ({ initialData }) => {
     const [pendingTasks, setPendingTasks] = useState<TaskVerification[]>(initialData);
+    const [rejectionModal, setRejectionModal] = useState<{
+        isOpen: boolean;
+        taskId: number | null;
+        taskName: string;
+        username: string;
+    }>({
+        isOpen: false,
+        taskId: null,
+        taskName: '',
+        username: ''
+    });
 
     const handleVerify = (taskId: number, status: 'Approved' | 'Rejected') => {
-        console.log(`Task ID ${taskId} ${status}. ${status === 'Approved' ? 'Points granted.' : 'Task rejected.'}`);
+        if (status === 'Approved') {
+            console.log(`Task ID ${taskId} Approved. Points granted.`);
+            setPendingTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+        } else {
+            // Open rejection modal instead of immediately rejecting
+            const taskToReject = pendingTasks.find(task => task.id === taskId);
+            if (taskToReject) {
+                setRejectionModal({
+                    isOpen: true,
+                    taskId,
+                    taskName: taskToReject.taskName,
+                    username: taskToReject.username
+                });
+            }
+        }
+    };
+
+    const handleConfirmRejection = (reason: string) => {
+        if (rejectionModal.taskId) {
+            console.log(`Task ID ${rejectionModal.taskId} Rejected. Reason: ${reason}`);
+            setPendingTasks(prevTasks => prevTasks.filter(task => task.id !== rejectionModal.taskId));
+            
+            // Log rejection details (in real app, send to API)
+            const rejectedTask = initialData.find(task => task.id === rejectionModal.taskId);
+            if (rejectedTask) {
+                console.log('Rejection Details:', {
+                    taskId: rejectedTask.id,
+                    userId: rejectedTask.userId,
+                    username: rejectedTask.username,
+                    taskName: rejectedTask.taskName,
+                    points: rejectedTask.points,
+                    rejectionReason: reason,
+                    rejectedAt: new Date().toISOString()
+                });
+            }
+        }
         
-        setPendingTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+        // Close modal
+        setRejectionModal({
+            isOpen: false,
+            taskId: null,
+            taskName: '',
+            username: ''
+        });
+    };
+
+    const handleCloseRejectionModal = () => {
+        setRejectionModal({
+            isOpen: false,
+            taskId: null,
+            taskName: '',
+            username: ''
+        });
     };
 
     if (pendingTasks.length === 0) {
@@ -309,61 +562,72 @@ const TaskVerificationContent: React.FC<TaskVerificationContentProps> = ({ initi
     }
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-white border-b border-[#E1BA73]/30 pb-2 flex items-center gap-2">
-                <Clock size={24} className="text-[#E1BA73]" /> Pending Task Reviews ({pendingTasks.length})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {pendingTasks.map((task) => (
-                    <div key={task.id} className="p-5 rounded-xl border border-gray-700/50 shadow-xl" style={{ background: CARD_BG }}>
-                        
-                        {/* Task Header */}
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 className="text-lg font-bold text-white">{task.taskName}</h3>
-                                <p className="text-sm text-gray-400">
-                                    Submitted by: <span className="font-semibold text-[#E1BA73]">{task.username}</span>
-                                </p>
+        <>
+            <div className="space-y-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white border-b border-[#E1BA73]/30 pb-2 flex items-center gap-2">
+                    <Clock size={24} className="text-[#E1BA73]" /> Pending Task Reviews ({pendingTasks.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {pendingTasks.map((task) => (
+                        <div key={task.id} className="p-5 rounded-xl border border-gray-700/50 shadow-xl" style={{ background: CARD_BG }}>
+                            
+                            {/* Task Header */}
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">{task.taskName}</h3>
+                                    <p className="text-sm text-gray-400">
+                                        Submitted by: <span className="font-semibold text-[#E1BA73]">{task.username}</span>
+                                    </p>
+                                </div>
+                                <span className="text-xl font-extrabold flex items-center gap-1" style={{ color: GOLD_PRIMARY }}>
+                                    <DollarSign size={18} /> {task.points}
+                                </span>
                             </div>
-                            <span className="text-xl font-extrabold flex items-center gap-1" style={{ color: GOLD_PRIMARY }}>
-                                <DollarSign size={18} /> {task.points}
-                            </span>
-                        </div>
 
-                        {/* Details and Proof */}
-                        <div className="text-xs text-gray-500 mb-4 space-y-2">
-                            <p>Submission Time: <span className="text-white">{task.submittedAt}</span></p>
-                            <a 
-                                href={task.proofUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-400 hover:text-blue-300 underline font-medium"
-                            >
-                                View Submitted Proof (Link/Screenshot)
-                            </a>
+                            {/* Details and Proof */}
+                            <div className="text-xs text-gray-500 mb-4 space-y-2">
+                                <p>Submission Time: <span className="text-white">{task.submittedAt}</span></p>
+                                <a 
+                                    href={task.proofUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-blue-400 hover:text-blue-300 underline font-medium"
+                                >
+                                    View Submitted Proof (Link/Screenshot)
+                                </a>
+                            </div>
+                            
+                            {/* Action Buttons */}
+                            <div className="flex gap-4 mt-4">
+                                <GoldButton 
+                                    onClick={() => handleVerify(task.id, 'Approved')} 
+                                    className="flex-1 px-4 py-2 text-sm uppercase"
+                                >
+                                    <CheckCircle size={16} className="inline mr-2" /> Approve
+                                </GoldButton>
+                                <motion.button 
+                                    onClick={() => handleVerify(task.id, 'Rejected')} 
+                                    className="flex-1 px-4 py-2 text-sm uppercase rounded-xl bg-red-800/50 text-red-400 font-bold hover:bg-red-800/70 transition-colors flex items-center justify-center gap-2"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    <X size={16} /> Reject
+                                </motion.button>
+                            </div>
                         </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="flex gap-4 mt-4">
-                            <GoldButton 
-                                onClick={() => handleVerify(task.id, 'Approved')} 
-                                className="flex-1 px-4 py-2 text-sm uppercase"
-                            >
-                                <CheckCircle size={16} className="inline mr-2" /> Approve
-                            </GoldButton>
-                            <motion.button 
-                                onClick={() => handleVerify(task.id, 'Rejected')} 
-                                className="flex-1 px-4 py-2 text-sm uppercase rounded-xl bg-red-800/50 text-red-400 font-bold hover:bg-red-800/70 transition-colors"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                <X size={16} className="inline mr-2" /> Reject
-                            </motion.button>
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
-        </div>
+
+            {/* Rejection Modal */}
+            <RejectionModal
+                isOpen={rejectionModal.isOpen}
+                onClose={handleCloseRejectionModal}
+                onConfirm={handleConfirmRejection}
+                taskName={rejectionModal.taskName}
+                username={rejectionModal.username}
+            />
+        </>
     );
 };
 
@@ -499,15 +763,9 @@ const TransactionsContent: React.FC<TransactionsContentProps> = ({ initialData, 
                     <p className="text-xs text-gray-500">{transaction.points.toLocaleString()} Points</p>
                 </div>
                 
-                <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full uppercase text-center ${getStatusClasses(transaction.status)} w-24`}>
-                  {transaction.status}
-                </span>
 
-                {activeTab === 'Unpaid' && transaction.status !== 'Paid' && (
-                  <GoldButton onClick={() => onPayout(transaction.id)} className="flex-none h-10 text-xs px-3">
-                    Payout
-                  </GoldButton>
-                )}
+
+
               </div>
             </div>
           ))
@@ -525,7 +783,7 @@ interface TaskDoneContentProps {}
  * Task Done Section Content
  */
 const TaskDoneContent: React.FC<TaskDoneContentProps> = () => {
-  type TaskTabType = 'follow' | 'video';
+  type TaskTabType = 'follow' | 'watch' | 'share';
   const [taskTab, setTaskTab] = useState<TaskTabType>('follow');
   const [socialTab, setSocialTab] = useState<'youtube' | 'facebook' | 'instagram' | 'twitter'>('youtube');
 
@@ -573,8 +831,8 @@ const TaskDoneContent: React.FC<TaskDoneContentProps> = () => {
       {/* Primary Tab Switcher (Follow / Video) */}
       <div className="flex gap-3 mb-6 p-1 rounded-xl border border-gray-700/50 w-full sm:w-fit" style={{ background: CARD_BG }}>
         {/* FIX: Explicitly cast array to match TaskTabType union */}
-        {(['follow', 'video'] as TaskTabType[]).map((tab) => (
-          <motion.button
+        {(['follow', 'watch' , 'share'] as TaskTabType[]).map((tab) => (
+          <motion.button 
             key={tab}
             onClick={() => { setTaskTab(tab); setSocialTab('youtube'); }}
             className={`flex-1 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-bold uppercase text-sm transition-colors ${taskTab === tab ? 'text-black' : 'text-gray-400 hover:text-white'}`}
@@ -587,7 +845,14 @@ const TaskDoneContent: React.FC<TaskDoneContentProps> = () => {
       </div>
 
       {/* Secondary Tab Switcher (Social Media Icons for 'Follow') */}
-      {taskTab === 'follow' && (
+      {taskTab === 'follow'  && (
+        <div className="flex gap-3 sm:gap-4 mb-8 flex-wrap">
+          {(Object.keys(DUMMY_TASKS.follow) as Array<keyof TaskData['follow']>).map(platform => (
+            <SocialTabButton key={platform} platform={platform} />
+          ))}
+        </div>
+      )}
+            {taskTab === 'share'  && (
         <div className="flex gap-3 sm:gap-4 mb-8 flex-wrap">
           {(Object.keys(DUMMY_TASKS.follow) as Array<keyof TaskData['follow']>).map(platform => (
             <SocialTabButton key={platform} platform={platform} />
@@ -615,14 +880,11 @@ const TaskDoneContent: React.FC<TaskDoneContentProps> = () => {
                   className="flex-1 sm:flex-none px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1"
                   style={{ background: '#333', color: GOLD_PRIMARY }}
                 >
-                  <DollarSign size={14} />
+                  <CoinsIcon size={14} />
                   {task.points}
                 </button>
                 
-                {/* Pay Button */}
-                <GoldButton onClick={() => handlePay(task)} className="flex-1 sm:flex-none h-10 text-xs px-3">
-                  Pay
-                </GoldButton>
+
               </div>
             </div>
           ))
@@ -730,7 +992,7 @@ const LeaderboardContent: React.FC<LeaderboardContentProps> = ({ data }) => {
 /**
  * Main Application Component
  */
-const App: React.FC = () => {
+const Dashboard: React.FC = () => {
   const isDesktop = useIsDesktop(); 
   const [selectedSection, setSelectedSection] = useState<string>('Payout Requests');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(isDesktop); 
@@ -882,4 +1144,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default Dashboard;
