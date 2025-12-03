@@ -480,11 +480,6 @@ const GlassCard: React.FC<GlassCardProps> = ({
   );
 };
 
-interface GradientTextProps {
-  children: ReactNode;
-  className?: string;
-  variant?: CardVariant;
-}
 
 
 
