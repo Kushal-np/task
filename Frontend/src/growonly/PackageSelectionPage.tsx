@@ -1,5 +1,5 @@
-// App.jsx
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+// App.tsx
+import React, { useState, useRef, useEffect, useCallback, useMemo,type ChangeEvent, type MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
@@ -28,6 +28,8 @@ import {
   Youtube,
   Video,
   ThumbsUp,
+  type
+  LucideIcon,
 } from "lucide-react";
 
 // ============= CONSTANTS & TYPES =============
@@ -68,7 +70,54 @@ interface UserDetails {
   additionalInfo?: string;
 }
 
-const SOCIAL_COLORS = {
+interface CheckoutUserDetails extends Omit<UserDetails, 'phone'> {
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  country: string;
+  gender: string;
+  promoCode: string;
+}
+
+interface StatusModalProps {
+  status: { type: 'success' | 'error'; message?: string } | null;
+  userName: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+interface StatusState {
+  type: 'success' | 'error';
+  message: string;
+}
+
+interface PaymentMethod {
+  id: string;
+  name: string;
+  icon: LucideIcon;
+  color: string;
+}
+
+interface PromoCodeOwner {
+  name: string;
+  discount: number;
+}
+
+interface OrderDetails {
+  packageType: PackageType;
+  platform: SocialPlatform;
+  engagementType: EngagementType;
+  selectedOption: number;
+  amount: string;
+  timestamp: string;
+  transactionId: string;
+  name: string;
+  email: string;
+  phone: string;
+  socialLink: string;
+}
+
+const SOCIAL_COLORS: Record<SocialPlatform, string> = {
   youtube: '#FF0000',
   facebook: '#1877F2',
   instagram: '#E4405F',
@@ -154,12 +203,18 @@ const PACKAGES_DATA: Record<PackageType, PackageDetails> = {
 // ============= UTILITY COMPONENTS =============
 
 // Magnetic Button Component
-const MagneticButton = ({ children, className = "", onClick = () => {} }) => {
+interface MagneticButtonProps {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}
+
+const MagneticButton: React.FC<MagneticButtonProps> = ({ children, className = "", onClick = () => {} }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
-  const buttonRef = useRef(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: MouseEvent) => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - rect.width / 2;
@@ -195,12 +250,18 @@ const MagneticButton = ({ children, className = "", onClick = () => {} }) => {
 };
 
 // Spotlight Card Component
-const SpotlightCard = ({ children, delay = 0, className = "" }) => {
+interface SpotlightCardProps {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}
+
+const SpotlightCard: React.FC<SpotlightCardProps> = ({ children, delay = 0, className = "" }) => {
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
-  const cardRef = useRef(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: MouseEvent) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -227,7 +288,7 @@ const SpotlightCard = ({ children, delay = 0, className = "" }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay }}
-      onMouseMove={handleMouseMove}
+      onMouseMove={handleMouseMove as any}
       onMouseLeave={handleMouseLeave}
       style={{
         transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
@@ -243,19 +304,23 @@ const SpotlightCard = ({ children, delay = 0, className = "" }) => {
 
 // ============= SOCIAL PLATFORM SELECTION COMPONENTS =============
 
-const YoutubeIcon = ({ className = "" }) => (
+interface IconProps {
+  className?: string;
+}
+
+const YoutubeIcon: React.FC<IconProps> = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
   </svg>
 );
 
-const FacebookIcon = ({ className = "" }) => (
+const FacebookIcon: React.FC<IconProps> = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
   </svg>
 );
 
-const InstagramIcon = ({ className = "" }) => (
+const InstagramIcon: React.FC<IconProps> = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
@@ -263,17 +328,118 @@ const InstagramIcon = ({ className = "" }) => (
   </svg>
 );
 
-const TwitterIcon = ({ className = "" }) => (
+const TwitterIcon: React.FC<IconProps> = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>
   </svg>
 );
 
-const TikTokIcon = ({ className = "" }) => (
+const TikTokIcon: React.FC<IconProps> = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
   </svg>
 );
+
+const StatusModal: React.FC<StatusModalProps> = ({ status, userName, onClose, onSuccess }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const handleBackdropClick = (e: MouseEvent) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      if (status?.type === "success") {
+        onSuccess();
+      } else {
+        onClose();
+      }
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+      onClick={handleBackdropClick as any}
+    >
+      <motion.div
+        ref={modalRef}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: "spring", damping: 25 }}
+        className={`max-w-md w-full rounded-3xl p-8 relative overflow-hidden ${
+          status?.type === "success"
+            ? "bg-gradient-to-br from-green-900/30 to-emerald-900/30"
+            : "bg-gradient-to-br from-red-900/30 to-rose-900/30"
+        } border ${
+          status?.type === "success"
+            ? "border-green-500/30"
+            : "border-red-500/30"
+        } backdrop-blur-xl`}
+      >
+        <div className="text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring" }}
+            className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${
+              status?.type === "success"
+                ? "bg-gradient-to-r from-green-500 to-emerald-500"
+                : "bg-gradient-to-r from-red-500 to-rose-500"
+            }`}
+          >
+            {status?.type === "success" ? (
+              <CheckCircle size={40} className="text-white" />
+            ) : (
+              <X size={40} className="text-white" />
+            )}
+          </motion.div>
+
+          <h2 className="text-3xl font-bold mb-4">
+            {status?.type === "success" ? "Request Received!" : "Payment Failed"}
+          </h2>
+
+          <p className="text-gray-300 mb-8 leading-relaxed">
+            {status?.type === "success"
+              ? `Dear ${userName}, your payment request has been submitted successfully. You'll receive dashboard access after system verification.`
+              : "There was an issue processing your payment. Please try again or contact support."}
+          </p>
+
+          <div className="flex gap-4 justify-center">
+            {status?.type === "error" && (
+              <button
+                onClick={onClose}
+                className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 text-white border border-white/20 font-bold text-sm uppercase tracking-widest transition-all"
+              >
+                Try Again
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (status?.type === "success") {
+                  onSuccess();
+                } else {
+                  onClose();
+                }
+              }}
+              className={`px-6 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all ${
+                status?.type === "success"
+                  ? "bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black hover:shadow-[0_0_30px_rgba(182,137,56,0.5)]"
+                  : "bg-gradient-to-r from-red-500 to-rose-500 text-white hover:shadow-[0_0_30px_rgba(239,68,68,0.5)]"
+              }`}
+            >
+              {status?.type === "success" ? "Continue" : "Back to Packages"}
+            </button>
+          </div>
+
+          <p className="mt-8 text-sm text-gray-500">
+            Click anywhere outside this box to {status?.type === "success" ? "continue" : "close"}
+          </p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 interface SocialPlatformCardProps {
   platform: SocialPlatform;
@@ -281,18 +447,9 @@ interface SocialPlatformCardProps {
   onClick: () => void;
 }
 
-const SocialPlatformCard: React.FC<SocialPlatformCardProps> = ({ platform, selected, onClick }) => {
-  const getPlatformIcon = () => {
-    switch (platform) {
-      case 'youtube': return YoutubeIcon;
-      case 'facebook': return FacebookIcon;
-      case 'instagram': return InstagramIcon;
-      case 'twitter': return TwitterIcon;
-      case 'tiktok': return TikTokIcon;
-      default: return YoutubeIcon;
-    }
-  };
 
+;
+const SocialPlatformCard: React.FC<SocialPlatformCardProps> = ({ platform, selected, onClick }) => {
   const getPlatformLabel = () => {
     switch (platform) {
       case 'youtube': return 'YouTube';
@@ -304,8 +461,20 @@ const SocialPlatformCard: React.FC<SocialPlatformCardProps> = ({ platform, selec
     }
   };
 
-  const Icon = getPlatformIcon();
   const color = SOCIAL_COLORS[platform];
+  const label = getPlatformLabel();
+
+  // Define the icon component based on platform
+  const PlatformIcon = () => {
+    switch (platform) {
+      case 'youtube': return <YoutubeIcon className="w-8 h-8"  />;
+      case 'facebook': return <FacebookIcon className="w-8 h-8"  />;
+      case 'instagram': return <InstagramIcon className="w-8 h-8"  />;
+      case 'twitter': return <TwitterIcon className="w-8 h-8"  />;
+      case 'tiktok': return <TikTokIcon className="w-8 h-8"  />;
+      default: return <YoutubeIcon className="w-8 h-8"  />;
+    }
+  };
 
   return (
     <motion.div
@@ -332,11 +501,11 @@ const SocialPlatformCard: React.FC<SocialPlatformCardProps> = ({ platform, selec
             border: `2px solid ${color}30`,
           }}
         >
-          <Icon className="w-8 h-8" style={{ color }} />
+          <PlatformIcon />
         </div>
         
         <div className="text-center">
-          <h3 className="font-bold text-lg text-white">{getPlatformLabel()}</h3>
+          <h3 className="font-bold text-lg text-white">{label}</h3>
           <p className="text-sm text-gray-400 mt-1">Select this platform</p>
         </div>
         
@@ -586,14 +755,21 @@ const PackageSelectionFlow: React.FC<PackageSelectionFlowProps> = ({
   const [selectedPlatform, setSelectedPlatform] = useState<SocialPlatform | null>(null);
   const [engagementType, setEngagementType] = useState<EngagementType | null>(null);
   const [selectedOption, setSelectedOption] = useState<number>(0);
-  const [userDetails, setUserDetails] = useState({
+  const [userDetails, setUserDetails] = useState<CheckoutUserDetails>({
     name: '',
     email: '',
-    password:'' , 
-    confirmPassword:'',
-    country:'',
-    gender:'',
-    promoCode:'',
+    password: '' , 
+    confirmPassword: '',
+    country: '',
+    gender: '',
+    promoCode: '',
+    phone: '',
+    socialLink: '',
+    platform: selectedPlatform as SocialPlatform,
+    engagementType: engagementType as EngagementType,
+    selectedOption: 0,
+    packageType: selectedPackage.id,
+    additionalInfo: ''
   });
 
   const socialPlatforms: SocialPlatform[] = ['youtube', 'facebook', 'instagram', 'twitter', 'tiktok'];
@@ -613,24 +789,27 @@ const PackageSelectionFlow: React.FC<PackageSelectionFlowProps> = ({
     setStep(4);
   };
 
-  const handleUserDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleUserDetailsChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setUserDetails(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = () => {
-    if (!selectedPlatform || !engagementType || !userDetails.name || !userDetails.email) {
+    if (!selectedPlatform || !engagementType || !userDetails.name || !userDetails.email || !userDetails.phone) {
       alert('Please fill in all required fields');
       return;
     }
 
     const finalDetails: UserDetails = {
-      ...userDetails,
+      name: userDetails.name,
+      email: userDetails.email,
+      phone: userDetails.phone,
       platform: selectedPlatform,
       engagementType,
       selectedOption,
       packageType: selectedPackage.id,
-      socialLink: userDetails.socialLink || `https://${selectedPlatform}.com/your-profile`
+      socialLink: userDetails.socialLink || `https://${selectedPlatform}.com/your-profile`,
+      additionalInfo: userDetails.additionalInfo
     };
 
     onComplete(finalDetails);
@@ -765,7 +944,7 @@ const PackageSelectionFlow: React.FC<PackageSelectionFlowProps> = ({
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-3">Choose Engagement Type</h2>
                 <p className="text-gray-400">
-                  Select how you want to grow on {selectedPlatform?.charAt(0).toUpperCase() + selectedPlatform?.slice(1)}
+                  Select how you want to grow on 
                 </p>
               </div>
               
@@ -838,292 +1017,290 @@ const PackageSelectionFlow: React.FC<PackageSelectionFlowProps> = ({
           )}
 
           {/* Step 4: User Details */}
-{/* Step 4: User Details */}
-{step === 4 && (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="space-y-8"
-  >
-    <div className="text-center mb-8">
-      <h2 className="text-2xl font-bold mb-3">Your Details</h2>
-      <p className="text-gray-400">
-        Please provide your details to proceed with the order
-      </p>
-    </div>
-    
-    <div className="grid lg:grid-cols-3 gap-8">
-      {/* Order Summary */}
-      <div className="lg:col-span-1">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="backdrop-blur-md rounded-3xl border border-[rgba(182,137,56,0.2)] bg-[rgba(26,20,16,0.4)] p-6 sticky top-32"
-        >
-          <div className="mb-6">
-            <h3 className="text-2xl font-bold text-white mb-2">Order Summary</h3>
-          </div>
+          {step === 4 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-8"
+            >
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold mb-3">Your Details</h2>
+                <p className="text-gray-400">
+                  Please provide your details to proceed with the order
+                </p>
+              </div>
+              
+              <div className="grid lg:grid-cols-3 gap-8">
+                {/* Order Summary */}
+                <div className="lg:col-span-1">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="backdrop-blur-md rounded-3xl border border-[rgba(182,137,56,0.2)] bg-[rgba(26,20,16,0.4)] p-6 sticky top-32"
+                  >
+                    <div className="mb-6">
+                      <h3 className="text-2xl font-bold text-white mb-2">Order Summary</h3>
+                    </div>
 
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-gray-400">Package</span>
-              <span className="font-bold text-white">{selectedPackage.name}</span>
-            </div>
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-gray-400">Platform</span>
-              <span className="font-bold text-white capitalize">{selectedPlatform}</span>
-            </div>
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-gray-400">Type</span>
-              <span className="font-bold text-white">
-                {engagementType === 'follow' ? 'Follow/Subscribe' : 'Reach & Engagement'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-gray-400">Option</span>
-              <span className="font-bold text-white text-right">{optionDetails.description}</span>
-            </div>
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-gray-400">Price</span>
-              <span className="text-2xl font-bold text-[#b68938]">
-                {selectedPackage.price}
-              </span>
-            </div>
-          </div>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center py-3 border-b border-white/10">
+                        <span className="text-gray-400">Package</span>
+                        <span className="font-bold text-white">{selectedPackage.name}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-white/10">
+                        <span className="text-gray-400">Platform</span>
+                        <span className="font-bold text-white capitalize">{selectedPlatform}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-white/10">
+                        <span className="text-gray-400">Type</span>
+                        <span className="font-bold text-white">
+                          {engagementType === 'follow' ? 'Follow/Subscribe' : 'Reach & Engagement'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-white/10">
+                        <span className="text-gray-400">Option</span>
+                        <span className="font-bold text-white text-right">{optionDetails.description}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-white/10">
+                        <span className="text-gray-400">Price</span>
+                        <span className="text-2xl font-bold text-[#b68938]">
+                          {selectedPackage.price}
+                        </span>
+                      </div>
+                    </div>
 
-          {selectedPackage.originalPrice && (
-            <div className="mt-4 px-4 py-2 rounded-lg bg-gradient-to-r from-[#b68938]/20 to-[#e1ba73]/20 border border-[#b68938]/30 text-center">
-              <span className="text-[#e1ba73] font-bold text-sm">
-                Save {selectedPackage.originalPrice}
-              </span>
-            </div>
+                    {selectedPackage.originalPrice && (
+                      <div className="mt-4 px-4 py-2 rounded-lg bg-gradient-to-r from-[#b68938]/20 to-[#e1ba73]/20 border border-[#b68938]/30 text-center">
+                        <span className="text-[#e1ba73] font-bold text-sm">
+                          Save {selectedPackage.originalPrice}
+                        </span>
+                      </div>
+                    )}
+                  </motion.div>
+                </div>
+                
+                {/* User Details Form */}
+                <div className="lg:col-span-2">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="backdrop-blur-xl rounded-3xl border border-[#b68938]/30 p-8"
+                    style={{ background: "rgba(26, 20, 16, 0.6)" }}
+                  >
+                    <h2 className="text-3xl font-bold mb-2">Personal Information</h2>
+                    <p className="text-gray-400 mb-8">
+                      Please provide your details to proceed with the purchase.
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-6 mb-8">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={userDetails.name}
+                          onChange={handleUserDetailsChange}
+                          required
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
+                          placeholder="Enter your full name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={userDetails.email}
+                          onChange={handleUserDetailsChange}
+                          required
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
+                          placeholder="you@example.com"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                          Password *
+                        </label>
+                        <input
+                          type="password"
+                          name="password"
+                          value={userDetails.password}
+                          onChange={handleUserDetailsChange}
+                          required
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
+                          placeholder="Create a strong password"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                          Confirm Password *
+                        </label>
+                        <input
+                          type="password"
+                          name="confirmPassword"
+                          value={userDetails.confirmPassword}
+                          onChange={handleUserDetailsChange}
+                          required
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
+                          placeholder="Confirm your password"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={userDetails.phone}
+                          onChange={handleUserDetailsChange}
+                          required
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
+                          placeholder="+91 9876543210"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                          Country *
+                        </label>
+                        <select
+                          name="country"
+                          value={userDetails.country}
+                          onChange={handleUserDetailsChange}
+                          required
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all appearance-none cursor-pointer"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23b68938' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                            backgroundPosition: "right 0.5rem center",
+                            backgroundRepeat: "no-repeat",
+                            backgroundSize: "1.5em 1.5em",
+                            paddingRight: "2.5rem"
+                          }}
+                        >
+                          <option value="" className="bg-[#1a1410] text-white">
+                            Select your country
+                          </option>
+                          <option value="Nepal" className="bg-[#1a1410] text-white">
+                            Nepal
+                          </option>
+                          <option value="India" className="bg-[#1a1410] text-white">
+                            India
+                          </option>
+                          <option value="Bangladesh" className="bg-[#1a1410] text-white">
+                            Bangladesh
+                          </option>
+                          <option value="Sri Lanka" className="bg-[#1a1410] text-white">
+                            Sri Lanka
+                          </option>
+                          <option value="Other" className="bg-[#1a1410] text-white">
+                            Other
+                          </option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                          Gender
+                        </label>
+                        <select
+                          name="gender"
+                          value={userDetails.gender}
+                          onChange={handleUserDetailsChange}
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all appearance-none cursor-pointer"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23b68938' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                            backgroundPosition: "right 0.5rem center",
+                            backgroundRepeat: "no-repeat",
+                            backgroundSize: "1.5em 1.5em",
+                            paddingRight: "2.5rem"
+                          }}
+                        >
+                          <option value="" className="bg-[#1a1410] text-white">
+                            Select gender
+                          </option>
+                          <option value="male" className="bg-[#1a1410] text-white">
+                            Male
+                          </option>
+                          <option value="female" className="bg-[#1a1410] text-white">
+                            Female
+                          </option>
+                          <option value="other" className="bg-[#1a1410] text-white">
+                            Other
+                          </option>
+                          <option value="prefer-not-to-say" className="bg-[#1a1410] text-white">
+                            Prefer not to say
+                          </option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                        </label>
+                        <input
+                          type="url"
+                          name="socialLink"
+                          value={userDetails.socialLink}
+                          onChange={handleUserDetailsChange}
+                          required
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
+                          placeholder={`https://${selectedPlatform}.com/your-username`}
+                        />
+                      </div>
+                    </div>
+
+
+                    {/* Terms & Conditions */}
+                    <div className="mb-8">
+                      <label className="flex items-start space-x-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          required
+                          className="w-5 h-5 rounded bg-white/5 border border-white/10 focus:ring-[#b68938] focus:ring-2 focus:ring-offset-2 focus:ring-offset-black text-[#b68938] transition-all"
+                        />
+                        <span className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                          I agree to the Terms & Conditions and Privacy Policy. I understand that all engagements come from verified SRK University students and the delivery time is {selectedPackage.id === 'starter' ? '7 days' : selectedPackage.id === 'intermediate' ? '3 days' : '24 hours'}.
+                        </span>
+                      </label>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-between items-center pt-6 border-t border-white/10">
+                      <button
+                        onClick={() => setStep(3)}
+                        className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 text-white border border-white/20 font-bold text-sm uppercase tracking-widest transition-all"
+                      >
+                        Back
+                      </button>
+                      
+                      <button
+                        onClick={handleSubmit}
+                        className="px-8 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black hover:shadow-[0_0_30px_rgba(182,137,56,0.5)] hover:scale-105 active:scale-95"
+                      >
+                        Complete Order for {selectedPackage.price}
+                      </button>
+                    </div>
+
+                    {/* Secure Payment Note */}
+                    <div className="mt-6 pt-6 border-t border-white/10">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Shield size={16} className="text-[#b68938]" />
+                        <span>Your information is secured with 256-bit SSL encryption</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
           )}
-        </motion.div>
-      </div>
-      
-      {/* User Details Form */}
-      <div className="lg:col-span-2">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="backdrop-blur-xl rounded-3xl border border-[#b68938]/30 p-8"
-          style={{ background: "rgba(26, 20, 16, 0.6)" }}
-        >
-          <h2 className="text-3xl font-bold mb-2">Personal Information</h2>
-          <p className="text-gray-400 mb-8">
-            Please provide your details to proceed with the purchase.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div>
-              <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={userDetails.name}
-                onChange={handleUserDetailsChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={userDetails.email}
-                onChange={handleUserDetailsChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
-                placeholder="you@example.com"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
-                Password *
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={userDetails.password}
-                onChange={handleUserDetailsChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
-                placeholder="Create a strong password"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
-                Confirm Password *
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={userDetails.confirmPassword}
-                onChange={handleUserDetailsChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
-                placeholder="Confirm your password"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={userDetails.phone}
-                onChange={handleUserDetailsChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
-                placeholder="+91 9876543210"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
-                Country *
-              </label>
-              <select
-                name="country"
-                value={userDetails.country}
-                onChange={handleUserDetailsChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23b68938' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: "right 0.5rem center",
-                  backgroundRepeat: "no-repeat",
-                  backgroundSize: "1.5em 1.5em",
-                  paddingRight: "2.5rem"
-                }}
-              >
-                <option value="" className="bg-[#1a1410] text-white">
-                  Select your country
-                </option>
-                <option value="Nepal" className="bg-[#1a1410] text-white">
-                  Nepal
-                </option>
-                <option value="India" className="bg-[#1a1410] text-white">
-                  India
-                </option>
-                <option value="Bangladesh" className="bg-[#1a1410] text-white">
-                  Bangladesh
-                </option>
-                <option value="Sri Lanka" className="bg-[#1a1410] text-white">
-                  Sri Lanka
-                </option>
-                <option value="Other" className="bg-[#1a1410] text-white">
-                  Other
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
-                Gender
-              </label>
-              <select
-                name="gender"
-                value={userDetails.gender}
-                onChange={handleUserDetailsChange}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23b68938' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: "right 0.5rem center",
-                  backgroundRepeat: "no-repeat",
-                  backgroundSize: "1.5em 1.5em",
-                  paddingRight: "2.5rem"
-                }}
-              >
-                <option value="" className="bg-[#1a1410] text-white">
-                  Select gender
-                </option>
-                <option value="male" className="bg-[#1a1410] text-white">
-                  Male
-                </option>
-                <option value="female" className="bg-[#1a1410] text-white">
-                  Female
-                </option>
-                <option value="other" className="bg-[#1a1410] text-white">
-                  Other
-                </option>
-                <option value="prefer-not-to-say" className="bg-[#1a1410] text-white">
-                  Prefer not to say
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">
-                {selectedPlatform?.charAt(0).toUpperCase() + selectedPlatform?.slice(1)} Profile Link *
-              </label>
-              <input
-                type="url"
-                name="socialLink"
-                value={userDetails.socialLink}
-                onChange={handleUserDetailsChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#b68938] focus:ring-1 focus:ring-[#b68938] transition-all"
-                placeholder={`https://${selectedPlatform}.com/your-username`}
-              />
-            </div>
-          </div>
-
-
-          {/* Terms & Conditions */}
-          <div className="mb-8">
-            <label className="flex items-start space-x-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                required
-                className="w-5 h-5 rounded bg-white/5 border border-white/10 focus:ring-[#b68938] focus:ring-2 focus:ring-offset-2 focus:ring-offset-black text-[#b68938] transition-all"
-              />
-              <span className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
-                I agree to the Terms & Conditions and Privacy Policy. I understand that all engagements come from verified SRK University students and the delivery time is {selectedPackage.id === 'starter' ? '7 days' : selectedPackage.id === 'intermediate' ? '3 days' : '24 hours'}.
-              </span>
-            </label>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-6 border-t border-white/10">
-            <button
-              onClick={() => setStep(3)}
-              className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 text-white border border-white/20 font-bold text-sm uppercase tracking-widest transition-all"
-            >
-              Back
-            </button>
-            
-            <button
-              onClick={handleSubmit}
-              className="px-8 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black hover:shadow-[0_0_30px_rgba(182,137,56,0.5)] hover:scale-105 active:scale-95"
-            >
-              Complete Order for {selectedPackage.price}
-            </button>
-          </div>
-
-          {/* Secure Payment Note */}
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Shield size={16} className="text-[#b68938]" />
-              <span>Your information is secured with 256-bit SSL encryption</span>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </div>
-  </motion.div>
-)}
         </div>
       </div>
     </div>
@@ -1133,7 +1310,7 @@ const PackageSelectionFlow: React.FC<PackageSelectionFlowProps> = ({
 // ============= EXISTING COMPONENTS (KEEPING ORIGINAL) =============
 
 // Navbar Component
-const Navbar = () => {
+const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -1224,7 +1401,7 @@ const Navbar = () => {
 };
 
 // Hero Section
-const Hero = () => {
+const Hero: React.FC = () => {
   return (
     <section className="relative min-h-screen flex items-center pt-32 pb-20 px-6 overflow-hidden">
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-black via-[#1a1410] to-black" />
@@ -1402,7 +1579,7 @@ const Hero = () => {
 };
 
 // Flow Section
-const FlowSection = () => {
+const FlowSection: React.FC = () => {
   const steps = [
     {
       number: "01",
@@ -1555,110 +1732,15 @@ const FlowSection = () => {
   );
 };
 
-// Status Modal Component
-const StatusModal = ({ status, userName, onClose, onSuccess }) => {
-  const modalRef = useRef();
-
-  const handleBackdropClick = (e) => {
-    if (modalRef.current && !modalRef.current.contains(e.target)) {
-      if (status?.type === "success") {
-        onSuccess();
-      } else {
-        onClose();
-      }
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
-      onClick={handleBackdropClick}
-    >
-      <motion.div
-        ref={modalRef}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: "spring", damping: 25 }}
-        className={`max-w-md w-full rounded-3xl p-8 relative overflow-hidden ${
-          status?.type === "success"
-            ? "bg-gradient-to-br from-green-900/30 to-emerald-900/30"
-            : "bg-gradient-to-br from-red-900/30 to-rose-900/30"
-        } border ${
-          status?.type === "success"
-            ? "border-green-500/30"
-            : "border-red-500/30"
-        } backdrop-blur-xl`}
-      >
-        <div className="text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring" }}
-            className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${
-              status?.type === "success"
-                ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                : "bg-gradient-to-r from-red-500 to-rose-500"
-            }`}
-          >
-            {status?.type === "success" ? (
-              <CheckCircle size={40} className="text-white" />
-            ) : (
-              <X size={40} className="text-white" />
-            )}
-          </motion.div>
-
-          <h2 className="text-3xl font-bold mb-4">
-            {status?.type === "success" ? "Request Received!" : "Payment Failed"}
-          </h2>
-
-          <p className="text-gray-300 mb-8 leading-relaxed">
-            {status?.type === "success"
-              ? `Dear ${userName}, your payment request has been submitted successfully. You'll receive dashboard access after system verification.`
-              : "There was an issue processing your payment. Please try again or contact support."}
-          </p>
-
-          <div className="flex gap-4 justify-center">
-            {status?.type === "error" && (
-              <button
-                onClick={onClose}
-                className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 text-white border border-white/20 font-bold text-sm uppercase tracking-widest transition-all"
-              >
-                Try Again
-              </button>
-            )}
-            <button
-              onClick={() => {
-                if (status?.type === "success") {
-                  onSuccess();
-                } else {
-                  onClose();
-                }
-              }}
-              className={`px-6 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all ${
-                status?.type === "success"
-                  ? "bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black hover:shadow-[0_0_30px_rgba(182,137,56,0.5)]"
-                  : "bg-gradient-to-r from-red-500 to-rose-500 text-white hover:shadow-[0_0_30px_rgba(239,68,68,0.5)]"
-              }`}
-            >
-              {status?.type === "success" ? "Continue" : "Back to Packages"}
-            </button>
-          </div>
-
-          <p className="mt-8 text-sm text-gray-500">
-            Click anywhere outside this box to {status?.type === "success" ? "continue" : "close"}
-          </p>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
 // Checkout Page Component (Simplified - Direct Payment)
-const CheckoutPage = ({ selectedPackage: pkg, userDetails, onBack, onComplete }) => {
+interface CheckoutPageProps {
+  selectedPackage: PackageDetails;
+  userDetails: UserDetails;
+  onBack: () => void;
+  onComplete: () => void;
+}
+
+const CheckoutPage: React.FC<CheckoutPageProps> = ({ selectedPackage: pkg, userDetails, onBack, onComplete }) => {
   const [formData, setFormData] = useState({
     name: userDetails.name,
     email: userDetails.email,
@@ -1668,17 +1750,17 @@ const CheckoutPage = ({ selectedPackage: pkg, userDetails, onBack, onComplete })
     paymentMethod: "",
     transactionId: "",
   });
-  const [paymentProof, setPaymentProof] = useState(null);
+  const [paymentProof, setPaymentProof] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [promoApplied, setPromoApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [finalPrice, setFinalPrice] = useState(pkg?.price || "₹0");
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState<StatusState | null>(null);
   const [userName, setUserName] = useState(userDetails.name.split(" ")[0] || "User");
   const [promoOwner, setPromoOwner] = useState("");
 
-  const paymentMethods = [
+  const paymentMethods: PaymentMethod[] = [
     { id: "esewa", name: "eSewa", icon: Smartphone, color: "#5D3FD3" },
     { id: "khalti", name: "Khalti", icon: Smartphone, color: "#5C2D91" },
     {
@@ -1695,7 +1777,7 @@ const CheckoutPage = ({ selectedPackage: pkg, userDetails, onBack, onComplete })
     },
   ];
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -1734,14 +1816,14 @@ const CheckoutPage = ({ selectedPackage: pkg, userDetails, onBack, onComplete })
     }
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       setPaymentProof(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.paymentMethod || !paymentProof) {
@@ -2035,7 +2117,7 @@ const CheckoutPage = ({ selectedPackage: pkg, userDetails, onBack, onComplete })
                     </label>
                     <div
                       onClick={() =>
-                        document.getElementById("payment-proof").click()
+                        document.getElementById("payment-proof")?.click()
                       }
                       className="border-2 border-dashed border-[#b68938]/30 rounded-2xl p-8 text-center cursor-pointer hover:border-[#b68938]/50 transition-all group"
                     >
@@ -2143,7 +2225,110 @@ const CheckoutPage = ({ selectedPackage: pkg, userDetails, onBack, onComplete })
 };
 
 // Packages Section Component
-const PackagesSection = ({ onPackageSelect }) => {
+interface PackagesSectionProps {
+  onPackageSelect: (pkg: PackageDetails) => void;
+}
+
+interface PackageCardProps {
+  pkg: PackageDetails;
+  i: number;
+  onPackageSelect: (pkg: PackageDetails) => void;
+}
+
+const PackageCard: React.FC<PackageCardProps> = ({ pkg, i, onPackageSelect }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ delay: i * 0.1 }}
+    whileHover={{ y: -10 }}
+    className="relative"
+  >
+    <SpotlightCard
+      delay={i * 0.1}
+      className={`relative h-full ${
+        pkg.popular ? "ring-2 ring-[#b68938] md:scale-105" : ""
+      }`}
+    >
+      {pkg.popular && (
+        <motion.div
+          className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black text-xs font-bold uppercase tracking-widest shadow-lg"
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          Most Popular
+        </motion.div>
+      )}
+
+      <div className="p-8 relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+
+        <h3 className="text-2xl font-bold text-white mb-2 relative z-10">
+          {pkg.name}
+        </h3>
+        <p className="text-gray-500 text-sm mb-6 relative z-10">
+          {pkg.description}
+        </p>
+
+        <div className="mb-8 relative z-10">
+          <motion.span
+            className="text-5xl font-bold text-[#b68938]"
+            whileHover={{ scale: 1.1 }}
+          >
+            {pkg.price}
+          </motion.span>
+          {pkg.originalPrice && (
+            <span className="text-lg text-gray-500 line-through ml-2">
+              {pkg.originalPrice}
+            </span>
+          )}
+          <span className="text-gray-500 ml-2">{pkg.period}</span>
+        </div>
+
+        <ul className="space-y-4 mb-8 relative z-10">
+          {pkg.features.map((feature, fi) => (
+            <motion.li
+              key={fi}
+              className="flex items-start gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + fi * 0.05 }}
+            >
+              <CheckCircle
+                size={20}
+                className="text-[#b68938] shrink-0 mt-0.5"
+              />
+              <span className="text-gray-300 text-sm">{feature}</span>
+            </motion.li>
+          ))}
+        </ul>
+
+        <motion.button
+          onClick={() => onPackageSelect(pkg)}
+          className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all relative overflow-hidden group ${
+            pkg.popular
+              ? "bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black hover:shadow-[0_0_40px_rgba(182,137,56,0.5)]"
+              : "bg-white/5 text-white border border-white/10 hover:bg-white/10"
+          }`}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {pkg.popular && (
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              animate={{ x: ["-100%", "100%"] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          )}
+          <span className="relative z-10">Select Package</span>
+        </motion.button>
+      </div>
+    </SpotlightCard>
+  </motion.div>
+);
+
+const PackagesSection: React.FC<PackagesSectionProps> = ({ onPackageSelect }) => {
   const [showSpecificPackages, setShowSpecificPackages] = useState(false);
 
   const generalPackages = [
@@ -2154,8 +2339,10 @@ const PackagesSection = ({ onPackageSelect }) => {
 
   const specificPackages = [
     {
+      id: 'facebook' as PackageType,
       name: "Facebook Boost",
       price: "₹3,999",
+      originalPrice: "₹4,999",
       period: "one-time",
       description: "Maximize your reach on Facebook.",
       features: [
@@ -2165,11 +2352,18 @@ const PackagesSection = ({ onPackageSelect }) => {
         "5-Day Delivery",
         "Page Insights Report",
       ],
+      followerOptions: [2500],
+      reachOptions: [
+        { videos: 1, likesPerVideo: 10000 },
+        { videos: 2, likesPerVideo: 5000 }
+      ],
       popular: false,
     },
     {
+      id: 'tiktok' as PackageType,
       name: "TikTok Trendsetter",
       price: "₹1,999",
+      originalPrice: "₹2,999",
       period: "one-time",
       description: "Go viral with targeted TikTok engagement.",
       features: [
@@ -2179,11 +2373,18 @@ const PackagesSection = ({ onPackageSelect }) => {
         "48-Hour Delivery",
         "Trending Hashtag Suggestions",
       ],
+      followerOptions: [2000],
+      reachOptions: [
+        { videos: 1, likesPerVideo: 5000 },
+        { videos: 2, likesPerVideo: 2500 }
+      ],
       popular: true,
     },
     {
+      id: 'instagram' as PackageType,
       name: "Instagram Elite",
       price: "₹7,999",
+      originalPrice: "₹9,999",
       period: "one-time",
       description: "Dominate the 'gram with premium growth.",
       features: [
@@ -2193,102 +2394,14 @@ const PackagesSection = ({ onPackageSelect }) => {
         "Dedicated Manager",
         "Story View Boosts",
       ],
+      followerOptions: [10000],
+      reachOptions: [
+        { videos: 1, likesPerVideo: 30000 },
+        { videos: 2, likesPerVideo: 15000 }
+      ],
       popular: false,
     },
   ];
-
-  const PackageCard = ({ pkg, i }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: i * 0.1 }}
-      whileHover={{ y: -10 }}
-      className="relative"
-    >
-      <SpotlightCard
-        delay={i * 0.1}
-        className={`relative h-full ${
-          pkg.popular ? "ring-2 ring-[#b68938] md:scale-105" : ""
-        }`}
-      >
-        {pkg.popular && (
-          <motion.div
-            className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black text-xs font-bold uppercase tracking-widest shadow-lg"
-            animate={{ y: [0, -5, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            Most Popular
-          </motion.div>
-        )}
-
-        <div className="p-8 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-
-          <h3 className="text-2xl font-bold text-white mb-2 relative z-10">
-            {pkg.name}
-          </h3>
-          <p className="text-gray-500 text-sm mb-6 relative z-10">
-            {pkg.description}
-          </p>
-
-          <div className="mb-8 relative z-10">
-            <motion.span
-              className="text-5xl font-bold text-[#b68938]"
-              whileHover={{ scale: 1.1 }}
-            >
-              {pkg.price}
-            </motion.span>
-            {pkg.originalPrice && (
-              <span className="text-lg text-gray-500 line-through ml-2">
-                {pkg.originalPrice}
-              </span>
-            )}
-            <span className="text-gray-500 ml-2">{pkg.period}</span>
-          </div>
-
-          <ul className="space-y-4 mb-8 relative z-10">
-            {pkg.features.map((feature, fi) => (
-              <motion.li
-                key={fi}
-                className="flex items-start gap-3"
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 + fi * 0.05 }}
-              >
-                <CheckCircle
-                  size={20}
-                  className="text-[#b68938] shrink-0 mt-0.5"
-                />
-                <span className="text-gray-300 text-sm">{feature}</span>
-              </motion.li>
-            ))}
-          </ul>
-
-          <motion.button
-            onClick={() => onPackageSelect(pkg)}
-            className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all relative overflow-hidden group ${
-              pkg.popular
-                ? "bg-gradient-to-r from-[#b68938] to-[#e1ba73] text-black hover:shadow-[0_0_40px_rgba(182,137,56,0.5)]"
-                : "bg-white/5 text-white border border-white/10 hover:bg-white/10"
-            }`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {pkg.popular && (
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                animate={{ x: ["-100%", "100%"] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-            )}
-            <span className="relative z-10">Select Package</span>
-          </motion.button>
-        </div>
-      </SpotlightCard>
-    </motion.div>
-  );
 
   return (
     <section
@@ -2326,11 +2439,9 @@ const PackagesSection = ({ onPackageSelect }) => {
 
         <div className="grid md:grid-cols-3 gap-8">
           {generalPackages.map((pkg, i) => (
-            <PackageCard key={`general-${i}`} pkg={pkg} i={i} />
+            <PackageCard key={`general-${i}`} pkg={pkg} i={i} onPackageSelect={onPackageSelect} />
           ))}
         </div>
-
-
 
         <AnimatePresence>
           {showSpecificPackages && (
@@ -2352,7 +2463,7 @@ const PackagesSection = ({ onPackageSelect }) => {
               </div>
               <div className="grid md:grid-cols-3 gap-8">
                 {specificPackages.map((pkg, i) => (
-                  <PackageCard key={`specific-${i}`} pkg={pkg} i={i} />
+                  <PackageCard key={`specific-${i}`} pkg={pkg} i={i} onPackageSelect={onPackageSelect} />
                 ))}
               </div>
             </motion.div>
@@ -2364,7 +2475,7 @@ const PackagesSection = ({ onPackageSelect }) => {
 };
 
 // Benefits Section
-const BenefitsSection = () => {
+const BenefitsSection: React.FC = () => {
   const benefits = [
     {
       icon: Shield,
@@ -2497,8 +2608,8 @@ const BenefitsSection = () => {
 };
 
 // FAQ Section
-const FAQSection = () => {
-  const [openIndex, setOpenIndex] = useState(null);
+const FAQSection: React.FC = () => {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = [
     {
@@ -2546,7 +2657,7 @@ const FAQSection = () => {
         </div>
 
         <div className="space-y-4">
-                    {faqs.map((faq, i) => (
+          {faqs.map((faq, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -2604,7 +2715,11 @@ const FAQSection = () => {
 };
 
 // CTA Section
-const CTASection = ({ onPackageSelect }) => {
+interface CTASectionProps {
+  onPackageSelect: (pkg: PackageDetails) => void;
+}
+
+const CTASection: React.FC<CTASectionProps> = ({ onPackageSelect }) => {
   return (
     <section className="py-32 px-6 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-[#b68938]/20 via-black to-[#e1ba73]/20" />
@@ -2758,7 +2873,7 @@ const CTASection = ({ onPackageSelect }) => {
 };
 
 // Footer Component
-const Footer = () => {
+const Footer: React.FC = () => {
   const socialLinks = [
     { icon: Facebook, label: "Facebook", color: "#1877F2" },
     { icon: Instagram, label: "Instagram", color: "#E4405F" },
@@ -2861,7 +2976,12 @@ const Footer = () => {
 };
 
 // Order Confirmation Component
-const OrderConfirmation = ({ orderDetails, onBack }) => {
+interface OrderConfirmationProps {
+  orderDetails: OrderDetails;
+  onBack: () => void;
+}
+
+const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ orderDetails, onBack }) => {
   const packageData = PACKAGES_DATA[orderDetails.packageType];
 
   return (
@@ -2952,21 +3072,21 @@ const OrderConfirmation = ({ orderDetails, onBack }) => {
 };
 
 // Main App Component
-export default function PackageSelectionPage() {
-  const [selectedPackage, setSelectedPackage] = useState(null);
+const PackageSelectionPage: React.FC = () => {
+  const [selectedPackage, setSelectedPackage] = useState<PackageDetails | null>(null);
   const [isPackageSelectionFlow, setIsPackageSelectionFlow] = useState(false);
   const [isCheckout, setIsCheckout] = useState(false);
   const [isOrderConfirmed, setIsOrderConfirmed] = useState(false);
-  const [orderDetails, setOrderDetails] = useState(null);
-  const [userDetailsForCheckout, setUserDetailsForCheckout] = useState(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [userDetailsForCheckout, setUserDetailsForCheckout] = useState<UserDetails | null>(null);
 
-  const handlePackageSelect = (pkg) => {
+  const handlePackageSelect = (pkg: PackageDetails) => {
     setSelectedPackage(pkg);
     setIsPackageSelectionFlow(true);
     window.scrollTo(0, 0);
   };
 
-  const handlePackageFlowComplete = (userDetails) => {
+  const handlePackageFlowComplete = (userDetails: UserDetails) => {
     setUserDetailsForCheckout(userDetails);
     setIsPackageSelectionFlow(false);
     setIsCheckout(true);
@@ -2979,18 +3099,20 @@ export default function PackageSelectionPage() {
     window.scrollTo(0, 0);
   };
 
-const handleCheckoutComplete = () => {
-  setIsCheckout(false);
-  setOrderDetails({
-    ...userDetailsForCheckout,
-    packageType: selectedPackage.id,
-    timestamp: new Date().toISOString(),
-    amount: selectedPackage.price,
-    transactionId: `SRK${Date.now().toString().slice(-8)}`
-  });
-  setIsOrderConfirmed(true);
-  window.scrollTo(0, 0);
-};
+  const handleCheckoutComplete = () => {
+    setIsCheckout(false);
+    if (selectedPackage && userDetailsForCheckout) {
+      setOrderDetails({
+        ...userDetailsForCheckout,
+        packageType: selectedPackage.id,
+        timestamp: new Date().toISOString(),
+        amount: selectedPackage.price,
+        transactionId: `SRK${Date.now().toString().slice(-8)}`
+      });
+      setIsOrderConfirmed(true);
+      window.scrollTo(0, 0);
+    }
+  };
 
   const handleCheckoutBack = () => {
     setIsCheckout(false);
@@ -3123,4 +3245,6 @@ const handleCheckoutComplete = () => {
       <Footer />
     </div>
   );
-}
+};
+
+export default PackageSelectionPage;

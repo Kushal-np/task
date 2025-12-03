@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 
 // --- Type Definitions for Data Structures ---
@@ -12,7 +12,12 @@ interface User {
   joinDate: string;
   referer: string; // Added referer field
 }
-
+interface MagneticButtonProps {
+  // Fix: Explicitly define 'children' as ReactNode to resolve the TypeScript error
+  children: ReactNode; 
+  className?: string;
+  onClick?: () => void;
+}
 interface TaskDetail {
   total: number;
   completed: number;
@@ -267,12 +272,14 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 };
 
 // --- Enhanced Magnetic Button ---
-const MagneticButton = ({ children, className = "", onClick = () => {} }) => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+const MagneticButton = ({ children, className = "", onClick = () => {} }: MagneticButtonProps) => {
+  // Add type for position state
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  // Type for the button reference, using the browser's 'HTMLButtonElement'
+  const buttonRef = useRef<HTMLButtonElement>(null); 
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = (e: MouseEvent) => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - rect.width / 2;
@@ -288,7 +295,6 @@ const MagneticButton = ({ children, className = "", onClick = () => {} }) => {
   return (
     <motion.button
       ref={buttonRef}
-      onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
@@ -337,12 +343,12 @@ const FloatingParticles = () => {
   );
 };
 
-// --- Floating Navigation Bar ---
 const FloatingNavBar: React.FC<{
   activeView: string;
   setActiveView: (view: string) => void;
-  scrollY: number;
-}> = ({ activeView, setActiveView, scrollY }) => {
+}> = ({ activeView, setActiveView }) => {
+  const { scrollY } = useScroll(); // Add useScroll here
+  
   const navItems = [
     { id: 'global', label: 'Overview', icon: '🌐' },
     { id: 'taskmonitoring', label: 'Tasks', icon: '📊' },
@@ -370,28 +376,28 @@ const FloatingNavBar: React.FC<{
       }}
       className="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden lg:block"
     >
-      <div className="flex items-center gap-1 p-1 rounded-2xl bg-black/40 border border-white/10 shadow-2xl">
+      {/* ADD THIS NAVIGATION CONTENT */}
+      <div className="flex items-center gap-1 p-1 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
         {navItems.map((item) => (
           <motion.button
             key={item.id}
             onClick={() => setActiveView(item.id)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-200 ${
+            className={`px-4 py-2 rounded-xl transition-all duration-200 flex items-center gap-2 ${
               activeView === item.id
-                ? 'bg-gradient-to-r from-[#b68938]/20 to-[#e1ba73]/10 text-white'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'bg-gradient-to-r from-[#b68938]/20 to-[#e1ba73]/20 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-white/10'
             }`}
           >
             <span className="text-lg">{item.icon}</span>
-            <span className="text-sm font-medium">{item.label}</span>
+            <span className="font-medium text-sm">{item.label}</span>
           </motion.button>
         ))}
       </div>
     </motion.nav>
   );
 };
-
 // --- View Components ---
 const GlobalOverviewView: React.FC<{ data: DashboardData }> = ({ data }) => {
   const stats = [
@@ -1863,11 +1869,11 @@ const GrowOnlyAdminDashboard: React.FC = () => {
       </AnimatePresence>
 
       {/* Floating Navigation Bar */}
-      <FloatingNavBar
-        activeView={activeView}
-        setActiveView={setActiveView}
-        scrollY={scrollY}
-      />
+<FloatingNavBar
+  activeView={activeView}
+  setActiveView={setActiveView}
+  // Remove scrollY={scrollY} prop
+/>
 
       {/* Main Content */}
       <main ref={mainRef} className="lg:ml-64 min-h-screen">
@@ -1943,91 +1949,94 @@ const GrowOnlyAdminDashboard: React.FC = () => {
       </main>
 
       {/* Custom CSS */}
-      <style jsx global>{`
-        /* Custom Scrollbar */
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(182, 137, 56, 0.3) transparent;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: rgba(182, 137, 56, 0.3);
-          border-radius: 3px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background-color: rgba(182, 137, 56, 0.5);
-        }
-        
-        /* Selection */
-        ::selection {
-          background: rgba(182, 137, 56, 0.3);
-          color: white;
-        }
-        
-        /* Smooth transitions */
-        * {
-          transition: background-color 0.2s ease, border-color 0.2s ease;
-        }
-        
-        /* Focus styles */
-        :focus-visible {
-          outline: 2px solid #b68938;
-          outline-offset: 2px;
-        }
-        
-        /* Glass effect enhancement */
-        .glass-card {
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .glass-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.1),
-            transparent
-          );
-          transition: left 0.5s;
-        }
-        
-        .glass-card:hover::before {
-          left: 100%;
-        }
+            <style dangerouslySetInnerHTML={{__html: `
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+                * { 
+                    font-family: 'Inter', sans-serif; 
+                    /* Consolidated transition rule */
+                    transition: background-color 0.2s ease, border-color 0.2s ease; 
+                }
 
-        /* Better mobile visibility */
-        @media (max-width: 768px) {
-          .glass-card {
-            background: rgba(26, 20, 16, 0.8) !important;
-            backdrop-filter: blur(20px) !important;
-          }
-          
-          table {
-            display: block;
-            overflow-x: auto;
-            white-space: nowrap;
-          }
-          
-          td, th {
-            min-width: 120px;
-          }
-        }
-      `}</style>
+                /* Custom Scrollbar */
+                .custom-scrollbar {
+                  scrollbar-width: thin;
+                  scrollbar-color: rgba(182, 137, 56, 0.3) transparent;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar {
+                  width: 6px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-track {
+                  background: transparent;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                  background-color: rgba(182, 137, 56, 0.3);
+                  border-radius: 3px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                  background-color: rgba(182, 137, 56, 0.5);
+                }
+                
+                /* Selection */
+                ::selection {
+                  background: rgba(182, 137, 56, 0.3);
+                  color: white;
+                }
+                
+                /* Focus styles */
+                :focus-visible {
+                  outline: 2px solid #b68938;
+                  outline-offset: 2px;
+                }
+                
+                /* Glass effect enhancement */
+                .glass-card {
+                  position: relative;
+                  overflow: hidden;
+                }
+                
+                .glass-card::before {
+                  content: '';
+                  position: absolute;
+                  top: 0;
+                  left: -100%;
+                  width: 100%;
+                  height: 100%;
+                  background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.1),
+                    transparent
+                  );
+                  transition: left 0.5s;
+                }
+                
+                .glass-card:hover::before {
+                  left: 100%;
+                }
+
+                /* Better mobile visibility */
+                @media (max-width: 768px) {
+                  .glass-card {
+                    background: rgba(26, 20, 16, 0.8) !important;
+                    backdrop-filter: blur(20px) !important;
+                  }
+                  
+                  table {
+                    display: block;
+                    overflow-x: auto;
+                    white-space: nowrap;
+                  }
+                  
+                  td, th {
+                    min-width: 120px;
+                  }
+                }
+                /* Placeholder content style removed */
+            `}} /> 
     </div>
   );
 };
