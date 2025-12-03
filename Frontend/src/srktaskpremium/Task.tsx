@@ -2,20 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { 
   Menu, X, ArrowRight, Sparkles, Users, Shield, Target, Coins, 
-  TrendingUp, Wallet, Zap, CheckCircle, Star, Quote, ArrowUpRight, 
+   Wallet, Zap, CheckCircle, Star, Quote, ArrowUpRight, 
   ChevronRight, Bot, Fingerprint, ShieldCheck, Globe, BarChart3,
-  Clock, Award, Trophy, DollarSign,
-  UserCheck, Smartphone, Wifi, Server, Package, Rocket,
-  Cpu, Activity, Heart,
-  MessageSquare, ThumbsUp, CreditCard,
+  Clock,  Trophy, DollarSign,
+   Smartphone, Wifi, Server,  Rocket,
+   Heart,
+  MessageSquare,
   Play, Pause,
-  Shield as ShieldIcon,
-  Globe as GlobeIcon,
+  
+  
   TrendingUp as TrendingUpIcon,
   Users as UsersIcon,
   Target as TargetIcon,
-  BarChart3 as BarChartIcon,
-  Zap as ZapIcon,
   Wallet as WalletIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -155,24 +153,7 @@ const Navbar: React.FC = () => {
     return () => unsubscribe();
   }, [scrollY]);
 
-  const navbarAnimation = {
-    hidden: { 
-      y: -100,
-      opacity: 0,
-      width: "100%",
-      borderRadius: "0px"
-    },
-    visible: { 
-      y: 0,
-      opacity: 1,
-      width: "100%",
-      borderRadius: "0px",
-      transition: {
-        duration: 2.5,
-        ease: [0.22, 1, 0.36, 1]
-      }
-    }
-  };
+
 
   return (
     <>
@@ -1423,7 +1404,7 @@ const AvailableEverywhere: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(true);
   const [balance, setBalance] = useState(24500);
   const [animatedBalance, setAnimatedBalance] = useState(24500);
-
+  console.log(balance)
   // Scroll-based notification triggers
   useEffect(() => {
     const unsubscribe = scrollYProgress.onChange((latest) => {
@@ -1435,9 +1416,7 @@ const AvailableEverywhere: React.FC = () => {
       if (latest > 0.5 && !notifications[1]) {
         setTimeout(() => setNotifications(prev => [true, true, prev[2]]), 600);
       }
-      if (latest > 0.75 && !notifications[2]) {
-        setTimeout(() => setNotifications(prev => [true, true, true]), 900);
-      }
+
       
       // Balance animation based on scroll
       if (latest > 0.4 && latest < 0.6) {
@@ -1475,7 +1454,7 @@ const AvailableEverywhere: React.FC = () => {
 
   // Safe window dimensions for SSR
   const [windowSize, setWindowSize] = useState({ width: 1000, height: 1000 });
-
+  console.log(windowSize)
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
@@ -2392,7 +2371,7 @@ const Footer: React.FC = () => {
 // ===== MAIN COMPONENT =====
 const TaskLandingPage: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
-
+  console.log(isLoaded)
   useEffect(() => {
     setIsLoaded(true);
   }, []);

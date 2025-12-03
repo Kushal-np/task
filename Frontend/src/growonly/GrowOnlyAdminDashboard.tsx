@@ -53,14 +53,7 @@ interface PrivateTaskPerformance {
   link: string;
 }
 
-interface QueueItem {
-  id: string;
-  userId: string;
-  amount: number;
-  date: string;
-  package?: string;
-  status: string;
-}
+
 
 interface TrendItem {
   month: string;
@@ -279,13 +272,7 @@ const MagneticButton = ({ children, className = "", onClick = () => {} }: Magnet
   // Type for the button reference, using the browser's 'HTMLButtonElement'
   const buttonRef = useRef<HTMLButtonElement>(null); 
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    setPosition({ x: x * 0.3, y: y * 0.3 });
-  };
+
 
   const handleMouseLeave = () => {
     setPosition({ x: 0, y: 0 });
@@ -1770,8 +1757,7 @@ const GrowOnlyAdminDashboard: React.FC = () => {
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const mainRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
-
+  setIsLoading(false)
   const data: DashboardData = {
     allUsers: ALL_USERS_DATA,
     privateTaskPerformance: PRIVATE_TASK_PERFORMANCE_DATA,

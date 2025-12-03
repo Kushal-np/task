@@ -9,23 +9,13 @@ declare const __initial_auth_token: string | undefined;
 const GOLD_PRIMARY = '#E1BA73';
 const GOLD_ACCENT = '#B68938';
 const GOLD_LIGHT = '#F5E8D0';
-const GOLD_DARK = '#9D7C4A';
 const DARK_BG = '#0A0705';
-const DARK_CARD = '#14110E';
-const TEXT_LIGHT = '#F5F5F5';
-const TEXT_DARK = '#1A1715';
 const SUCCESS = '#10B981';
 const ERROR = '#EF4444';
 const WARNING = '#F59E0B';
 const INFO = '#3B82F6';
 
-// Glass effect styles
-const GLASS_STYLE = {
-  background: 'rgba(20, 17, 14, 0.85)',
-  backdropFilter: 'blur(20px)',
-  border: '1px solid rgba(225, 186, 115, 0.15)',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-};
+
 
 // --- TYPE DEFINITIONS ---
 interface DashboardData {
@@ -108,7 +98,6 @@ interface NavItem {
 }
 
 // --- ENVIRONMENT CONFIG ---
-const APP_ID: string = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
 // --- UTILITY FUNCTIONS ---
 const convertToRupees = (usd: number): number => usd * 83.5; // Approximate conversion rate
@@ -497,24 +486,7 @@ interface GradientTextProps {
   variant?: CardVariant;
 }
 
-const GradientText: React.FC<GradientTextProps> = ({ children, className = "", variant = 'gold' }) => {
-  const getGradient = (): string => {
-    switch(variant) {
-      case 'gold': return `from-[${GOLD_PRIMARY}] via-[${GOLD_LIGHT}] to-[${GOLD_ACCENT}]`;
-      case 'emerald': return 'from-emerald-300 to-emerald-500';
-      case 'violet': return 'from-violet-300 to-violet-500';
-      case 'blue': return 'from-blue-300 to-blue-500';
-      case 'rose': return 'from-rose-300 to-rose-500';
-      case 'cyan': return 'from-cyan-300 to-cyan-500';
-      default: return 'from-gray-300 to-gray-500';
-    }
-  };
-  return (
-    <span className={`bg-clip-text text-transparent bg-gradient-to-r ${getGradient()} ${className}`}>
-      {children}
-    </span>
-  );
-};
+
 
 interface ToastProps {
   message: string | null;
@@ -1132,11 +1104,7 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = ({ leaderboardData }) =>
   };
 
   const TrendIcon = ({ trend, size = 'sm' }: { trend: 'up' | 'down' | 'stable'; size?: 'sm' | 'lg' }) => {
-    const colors = {
-      up: 'text-emerald-400',
-      down: 'text-rose-400',
-      stable: 'text-gray-400'
-    };
+
 
     const sizeClasses = {
       sm: 'w-5 h-5',
@@ -1712,7 +1680,7 @@ const GrowDashboard: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile>(MOCK_USER_PROFILE);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
+  setUserProfile(MOCK_USER_PROFILE);
   const currentTitle: string = useMemo(() => 
     navItems.find(item => item.id === currentView)?.label || 'Dashboard', 
     [currentView]

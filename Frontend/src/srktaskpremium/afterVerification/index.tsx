@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence} from 'framer-motion';
 import { 
   Menu, X, ArrowRight, UserCircle, Play, Upload, Youtube, Instagram, 
-  Smartphone, CheckCircle, Clock, Zap, Shield, TrendingUp, DollarSign, Award, Wallet, ListChecks, Sparkles, FileText, Send, Check, Facebook, 
+  Smartphone, CheckCircle, Clock, Zap, Shield, TrendingUp, DollarSign, Award, Wallet, ListChecks, Sparkles, Send, Check, Facebook, 
   Ticket, AlertTriangle, LogOut, BarChart3, Users,   
   ChevronRight, Camera, ShieldCheck, Star, Activity
   , Search, Crown, Coins, Info,
@@ -109,63 +109,9 @@ interface UserProfile {
 }
 
 // --- THEME CONFIGURATION ---
-const THEME = {
-  colors: {
-    bgDeepBlack: '#0a0a0a',
-    bgCard: 'rgba(26, 20, 16, 0.4)',
-    goldAccent: '#b68938',
-    goldLight: '#e1ba73',
-    goldGradient: 'linear-gradient(135deg, #b68938 0%, #e1ba73 100%)',
-    purpleGradient: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-    blueGradient: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
-    greenGradient: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-    textWhite: '#F3F4F6',
-    textGray: '#9CA3AF',
-    greenSuccess: '#10B981',
-    redAlert: '#EF4444',
-    blueInfo: '#3B82F6',
-    orangeWarn: '#F59E0B',
-    purplePremium: '#8B5CF6',
-    pinkVibrant: '#EC4899',
-    cyanBright: '#06B6D4',
-  },
-  effects: {
-    glass: 'backdrop-blur-xl',
-    shadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-    goldGlow: '0 0 20px rgba(182, 137, 56, 0.3)',
-    purpleGlow: '0 0 20px rgba(139, 92, 246, 0.3)',
-    blueGlow: '0 0 20px rgba(59, 130, 246, 0.3)',
-  },
-  animations: {
-    float: 'float 6s ease-in-out infinite',
-    pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-    shimmer: 'shimmer 2s infinite linear',
-  }
-};
 
-// --- VOLUME ICONS ---
-const VolumeOff = (props: any) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-    <path d="M23 9L17 15" />
-    <path d="M17 9L23 15" />
-  </svg>
-);
 
-const VolumeLow = (props: any) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-  </svg>
-);
 
-const VolumeHigh = (props: any) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-  </svg>
-);
 
 // --- ANIMATED BACKGROUND COMPONENT ---
 const AnimatedBackground = () => {
@@ -531,13 +477,7 @@ const FloatingNotification: React.FC<{
 };
 
 // --- DATA ---
-const socialIcons: Record<SocialPlatform, React.FC<any>> = { 
-  youtube: Youtube, 
-  instagram: Instagram, 
-  tiktok: Smartphone, 
-  facebook: Facebook, 
-  twitter: X 
-};
+
 
 const allPlatforms: PlatformInfo[] = [
   { 
@@ -2338,7 +2278,7 @@ const MobileMenu = () => (
   // --- TASKS VIEW ---
   const TasksView = () => {
     const [showVideoFeature, setShowVideoFeature] = useState(false);
-
+    setShowVideoFeature(false);
     if (!isApproved) {
       return (
         <GlassCard className="p-12 text-center">
@@ -2856,7 +2796,7 @@ const VideoPlayerModal = ({ task, onClose }: any) => {
   const [selectedTimestamps, setSelectedTimestamps] = useState<number[]>([]);
   const progressInterval = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-
+  setPlayer(null);
   // YouTube API initialization
   useEffect(() => {
     if (task.platform === 'youtube' && task.embedId) {

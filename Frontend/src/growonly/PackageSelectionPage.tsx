@@ -1,5 +1,5 @@
 // App.tsx
-import React, { useState, useRef, useEffect, useCallback, useMemo,type ChangeEvent, type MouseEvent } from "react";
+import React, { useState, useRef , type ChangeEvent, type MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
@@ -32,11 +32,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 
-// ============= CONSTANTS & TYPES =============
-const GOLD_PRIMARY = '#b68938';
-const GOLD_ACCENT = '#e1ba73';
-const SUCCESS = '#10B981';
-const INFO = '#3B82F6';
+
 
 type SocialPlatform = 'youtube' | 'facebook' | 'instagram' | 'twitter' | 'tiktok';
 type EngagementType = 'follow' | 'reach';
@@ -98,10 +94,7 @@ interface PaymentMethod {
   color: string;
 }
 
-interface PromoCodeOwner {
-  name: string;
-  discount: number;
-}
+
 
 interface OrderDetails {
   packageType: PackageType;
@@ -660,7 +653,7 @@ interface SelectionOptionProps {
   packageData: PackageDetails;
 }
 
-const SelectionOption: React.FC<SelectionOptionProps> = ({ option, type, index, selected, onClick, packageData }) => {
+const SelectionOption: React.FC<SelectionOptionProps> = ({ option, type, selected, onClick, packageData }) => {
   const isFollow = type === 'follow';
   
   return (
@@ -1759,7 +1752,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ selectedPackage: pkg, userD
   const [status, setStatus] = useState<StatusState | null>(null);
   const [userName, setUserName] = useState(userDetails.name.split(" ")[0] || "User");
   const [promoOwner, setPromoOwner] = useState("");
-
+  setUserName("User")
   const paymentMethods: PaymentMethod[] = [
     { id: "esewa", name: "eSewa", icon: Smartphone, color: "#5D3FD3" },
     { id: "khalti", name: "Khalti", icon: Smartphone, color: "#5C2D91" },
@@ -2330,7 +2323,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ pkg, i, onPackageSelect }) =>
 
 const PackagesSection: React.FC<PackagesSectionProps> = ({ onPackageSelect }) => {
   const [showSpecificPackages, setShowSpecificPackages] = useState(false);
-
+  setShowSpecificPackages(false);
   const generalPackages = [
     PACKAGES_DATA.starter,
     PACKAGES_DATA.intermediate,

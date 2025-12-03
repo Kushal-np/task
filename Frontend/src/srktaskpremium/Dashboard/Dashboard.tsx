@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, ShieldCheck, ListChecks, Users, Trophy, DollarSign, X, Menu, Youtube, Facebook, Instagram, Twitter, Wallet, Repeat2, CheckCircle, Clock, AlertCircle, Coins, CoinsIcon } from 'lucide-react';
+import { Shield, ShieldCheck, ListChecks, Users, Trophy, DollarSign, X, Menu, Youtube, Facebook, Instagram, Twitter, Wallet, Repeat2, CheckCircle, Clock, AlertCircle,  CoinsIcon } from 'lucide-react';
 
 // --- TYPE DEFINITIONS ---
 interface RejectionModalProps {
@@ -697,7 +697,7 @@ interface TransactionsContentProps {
 /**
  * Transactions Section Content
  */
-const TransactionsContent: React.FC<TransactionsContentProps> = ({ initialData, onPayout }) => {
+const TransactionsContent: React.FC<TransactionsContentProps> = ({ initialData }) => {
   type TabType = 'Unpaid' | 'Paid' | 'All';
   const [activeTab, setActiveTab] = useState<TabType>('Unpaid');
 
@@ -713,14 +713,7 @@ const TransactionsContent: React.FC<TransactionsContentProps> = ({ initialData, 
     }
   }, [initialData, activeTab]);
 
-  const getStatusClasses = (status: Payout['status']) => {
-    switch (status) {
-      case 'Paid': return 'bg-green-600/20 text-green-400';
-      case 'Requested': return 'bg-yellow-600/20 text-yellow-400';
-      case 'Pending Review': return 'bg-blue-600/20 text-blue-400';
-      default: return 'bg-gray-600/20 text-gray-400';
-    }
-  };
+
 
   return (
     <div>
@@ -800,10 +793,6 @@ const TaskDoneContent: React.FC<TaskDoneContentProps> = () => {
     }
     return DUMMY_TASKS.video.watch;
   }, [taskTab, socialTab]);
-
-  const handlePay = (task: CompletedTask) => {
-    console.log(`Paying ${task.points} points/amount for task ID: ${task.id} to user: ${task.username}`);
-  };
 
   interface SocialTabButtonProps {
       platform: 'youtube' | 'facebook' | 'instagram' | 'twitter';
